@@ -5,9 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/zhitoo/golang-web-api/app/helper"
-
 	"github.com/gin-gonic/gin"
+	"github.com/zhitoo/golang-web-api/app/response"
 )
 
 var List []int = []int{}
@@ -119,16 +118,17 @@ type user struct {
 func (t *Handler) BodyBinder(c *gin.Context) {
 	u := new(user)
 	err := c.ShouldBindJSON(u)
+
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, helper.GenerateBaseResponseWithValidationError(nil, false, 422, err))
+		response.NewReponse().SetResult(nil).SetError(err).SetStatus(false).SetHttpStatusCode(422).Json(c)
 		return
 	}
 
-	c.JSON(http.StatusOK, helper.GenerateBaseResponse(gin.H{
+	response.NewReponse().SetResult(gin.H{
 		"id":     u.ID,
 		"name":   u.Name,
 		"mobile": u.Mobile,
-	}, true, http.StatusOK))
+	}).Json(c)
 }
 
 func (t *Handler) FileBinder(c *gin.Context) {
