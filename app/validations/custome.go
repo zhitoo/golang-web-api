@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/zhitoo/golang-web-api/lang"
 )
 
 type ValidationError struct {
@@ -14,17 +15,30 @@ type ValidationError struct {
 }
 
 func GetValidationErrors(err error) *[]ValidationError {
-	var validationErrors []ValidationError
 	var ve validator.ValidationErrors
-	if errors.As(err, &ve) {
-		for _, err := range err.(validator.ValidationErrors) {
-			var el ValidationError
-			el.Property = err.Field()
-			el.Tag = err.Tag()
-			el.Value = err.Param()
-			validationErrors = append(validationErrors, el)
-		}
-		return &validationErrors
+
+	if !errors.As(err, &ve) {
+		return nil
 	}
-	return nil
+
+	result := make([]ValidationError, 0, len(ve))
+
+	for _, fieldErr := range ve {
+		result = append(result, ValidationError{
+			Property: fieldErr.Field(),
+			Tag:      fieldErr.Tag(),
+			Value:    fieldErr.Param(),
+			Message:  getValidationMessage(fieldErr),
+		})
+	}
+
+	return &result
+}
+
+func getValidationMessage(fieldErr validator.FieldError) string {
+	param := fieldErr.Param()
+	if param == "" {
+		return lang.Trans("validation", fieldErr.Tag())
+	}
+	return lang.Trans("validation", fieldErr.Tag(), fieldErr.Param())
 }

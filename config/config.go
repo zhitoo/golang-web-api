@@ -13,6 +13,7 @@ import (
 
 type AppConfig struct {
 	Name string
+	Lang string
 }
 type ServerConfig struct {
 	Port    string

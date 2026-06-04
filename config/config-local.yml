@@ -1,5 +1,6 @@
 App:
   Name: "Test"
+  Lang: "fa"
 Server:
   Port: 5050
   RunMode: debug
