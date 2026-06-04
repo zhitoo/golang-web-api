@@ -1,0 +1,19 @@
+info:
+  name: uri-binder
+  type: http
+  seq: 6
+
+http:
+  method: post
+  url: "{{baseUrl}}test/uri-binder/12/reza"
+  headers:
+    - name: UserId
+      value: "1"
+    - name: Browser
+      value: bruno
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

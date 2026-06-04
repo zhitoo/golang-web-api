@@ -1,0 +1,32 @@
+App:
+  Name: "Test"
+Server:
+  Port: 5050
+  RunMode: debug
+Logger:
+  FileName: app.log
+  Encoding: json
+  Level: debug
+  Logger: zerolog
+Cors:
+  AllowOrigins: "*"
+Postgres:
+  Host: localhost
+  Port: 5432
+  User: postgres
+  Password: secret
+  DB: carsale
+  SslMode: disable
+  TimeZone: Asia/Tehran
+Redis:
+  Host: localhost
+  Port: 6379
+  Password: password
+  DB: 0
+  DialTimeout: 5
+  ReadTimeout: 5
+  WriteTimeout: 5
+  PoolSize: 10
+  PoolTimeout: 15
+  IdleCheckFrequency: 500
+  IdleTimeout: 500

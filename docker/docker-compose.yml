@@ -1,0 +1,148 @@
+services:
+ ####################### ELK #######################
+  setup:
+    build:
+      context: elk/setup/
+      args:
+        ELASTIC_VERSION: ${ELASTIC_VERSION}
+    init: true
+    volumes:
+      - ./elk/setup/entrypoint.sh:/entrypoint.sh:ro,Z
+      - ./elk/setup/helpers.sh:/helpers.sh:ro,Z
+      - ./elk/setup/roles:/roles:ro,Z
+      - setup:/state:Z
+    environment:
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
+      KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
+      FILEBEAT_INTERNAL_PASSWORD: ${FILEBEAT_INTERNAL_PASSWORD:-}
+    networks:
+      - app_net
+    depends_on:
+      - elasticsearch
+  elasticsearch:
+    build:
+      context: elk/elasticsearch/
+      args:
+        ELASTIC_VERSION: ${ELASTIC_VERSION}
+    container_name: elasticsearch
+    volumes:
+      - ./elk/elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro,Z
+      - elasticsearch:/usr/share/elasticsearch/data:Z
+    ports:
+      - 9200:9200
+      - 9300:9300
+    environment:
+      node.name: elasticsearch
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
+      discovery.type: single-node
+    networks:
+      - app_net
+    restart: unless-stopped
+
+  kibana:
+    build:
+      context: elk/kibana/
+      args:
+        ELASTIC_VERSION: ${ELASTIC_VERSION}
+    volumes:
+      - ./elk/kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro,Z
+      - elasticsearch:/usr/share/kibana/data:Z
+    ports:
+      - 5601:5601
+    environment:
+      KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
+    networks:
+      - app_net
+    depends_on:
+      - elasticsearch
+    restart: unless-stopped
+
+  filebeat:
+    build:
+      context: elk/filebeat/
+      args:
+        ELASTIC_VERSION: ${ELASTIC_VERSION}
+    user: root
+    command:
+      - -e
+      - --strict.perms=false
+    volumes:
+      #- ../prod/logs:/var/log/filebeat/service:ro
+      - ${PWD}/elk/filebeat/config/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - ${PWD}/../logs:/var/log/filebeat/service:ro
+      - logs:/var/log/filebeat
+      - logs:/app:ro
+
+    environment:
+      FILEBEAT_INTERNAL_PASSWORD: ${FILEBEAT_INTERNAL_PASSWORD:-}
+      BEATS_SYSTEM_PASSWORD: ${FILEBEAT_INTERNAL_PASSWORD:-}
+    networks:
+      - app_net
+    depends_on:
+      - elasticsearch
+  postgres:
+    image: mirror2.chabokan.net/postgres:latest
+    container_name: postgres_con
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: carsale
+      PGDATA: /data/postgres
+    volumes:
+      - postgres:/data/postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - app_net
+    restart: unless-stopped
+  pgadmin:
+    image: mirror2.chabokan.net/dpage/pgadmin4
+    container_name: pgadmin_con
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@main.com
+      PGADMIN_DEFAULT_PASSWORD: secret
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    ports:
+      - "8585:80"
+    networks:
+      - app_net
+    restart: unless-stopped
+    depends_on:
+      - postgres
+  redis: 
+    image: mirror2.chabokan.net/redis:latest
+    container_name: redis_con
+    command: ["redis-server", "/etc/redis/redis.conf"]
+    volumes:
+      - ./redis/redis.conf:/etc/redis/redis.conf
+      - redis:/etc/redis.conf
+      - redis:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - app_net
+    restart: unless-stopped
+
+
+
+
+
+
+
+
+
+
+
+volumes:
+  postgres:
+  pgadmin:
+  redis:
+  logs:
+  setup:
+  elasticsearch:
+  prometheus_data:
+networks:
+  app_net:
+    driver: bridge

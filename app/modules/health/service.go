@@ -1,0 +1,5 @@
+package health
+
+func HealthCheck() {
+
+}

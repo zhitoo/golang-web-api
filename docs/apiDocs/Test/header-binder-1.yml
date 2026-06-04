@@ -1,0 +1,22 @@
+info:
+  name: header-binder-1
+  type: http
+  seq: 2
+
+http:
+  method: post
+  url: "{{baseUrl}}test/header-binder-1"
+  headers:
+    - name: UserId
+      value: "1"
+  body:
+    type: form-urlencoded
+    data:
+      - name: id
+        value: "3"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
