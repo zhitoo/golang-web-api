@@ -15,3 +15,8 @@ go build -o artisan artisan.go
 ```
 ./artisan migrate:down 1[steps]
 ```
+
+## migrate force
+```
+./artisan migrate:force [numebr]
+```
