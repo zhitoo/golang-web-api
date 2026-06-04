@@ -2,6 +2,7 @@ package validations
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/zhitoo/golang-web-api/lang"
@@ -25,7 +26,7 @@ func GetValidationErrors(err error) *[]ValidationError {
 
 	for _, fieldErr := range ve {
 		result = append(result, ValidationError{
-			Property: fieldErr.Field(),
+			Property: strings.ToLower(fieldErr.Field()),
 			Tag:      fieldErr.Tag(),
 			Value:    fieldErr.Param(),
 			Message:  getValidationMessage(fieldErr),
@@ -38,7 +39,7 @@ func GetValidationErrors(err error) *[]ValidationError {
 func getValidationMessage(fieldErr validator.FieldError) string {
 	param := fieldErr.Param()
 	if param == "" {
-		return lang.Trans("validation", fieldErr.Tag())
+		return lang.Trans("validation", fieldErr.Tag(), strings.ToLower(fieldErr.Field()))
 	}
-	return lang.Trans("validation", fieldErr.Tag(), fieldErr.Param())
+	return lang.Trans("validation", fieldErr.Tag(), strings.ToLower(fieldErr.Field()), fieldErr.Param())
 }

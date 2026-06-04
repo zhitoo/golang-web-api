@@ -19,7 +19,6 @@ import (
 )
 
 func InitServer(cfg *config.Config) {
-
 	r := gin.New()
 
 	RegisterValidatores()

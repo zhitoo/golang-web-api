@@ -8,11 +8,9 @@ import (
 	"github.com/zhitoo/golang-web-api/pkg/logging"
 )
 
-// @securityDefinitaions.apiKey AuthBearer
-// @in header
-// @name Authorization
 func main() {
 	cfg := config.GetConfig()
+
 	logger := logging.NewLogger(cfg)
 
 	logger.Info(logging.General, logging.Startup, "app starting", nil)
