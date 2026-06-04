@@ -1,12 +1,13 @@
 package app
 
 import (
-	"carsale/app/middlewares"
-	"carsale/app/modules/health"
-	"carsale/app/modules/test"
-	"carsale/app/validations"
-	"carsale/config"
 	"fmt"
+
+	"github.com/zhitoo/golang-web-api/app/middlewares"
+	"github.com/zhitoo/golang-web-api/app/modules/health"
+	"github.com/zhitoo/golang-web-api/app/modules/test"
+	"github.com/zhitoo/golang-web-api/app/validations"
+	"github.com/zhitoo/golang-web-api/config"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -14,7 +15,7 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
-	"carsale/docs"
+	"github.com/zhitoo/golang-web-api/docs"
 )
 
 func InitServer(cfg *config.Config) {

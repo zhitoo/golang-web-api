@@ -1,11 +1,12 @@
 package cache
 
 import (
-	"carsale/config"
 	"context"
 	"fmt"
 	"log"
 	"time"
+
+	"github.com/zhitoo/golang-web-api/config"
 
 	"github.com/go-redis/redis/v8"
 )

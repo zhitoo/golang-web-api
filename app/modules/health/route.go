@@ -1,8 +1,9 @@
 package health
 
 import (
-	"carsale/app/helper"
 	"net/http"
+
+	"github.com/zhitoo/golang-web-api/app/helper"
 
 	"github.com/gin-gonic/gin"
 )

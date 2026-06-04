@@ -1,9 +1,10 @@
 package logging
 
 import (
-	"carsale/config"
 	"path/filepath"
 	"runtime"
+
+	"github.com/zhitoo/golang-web-api/config"
 )
 
 func getLogPath(cfg *config.Config) string {

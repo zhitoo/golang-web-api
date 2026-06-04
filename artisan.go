@@ -1,13 +1,14 @@
 package main
 
 import (
-	"carsale/app"
-	"carsale/config"
-	"carsale/database/db"
-	"carsale/database/migrations"
 	"log"
 	"os"
 	"strconv"
+
+	"github.com/zhitoo/golang-web-api/app"
+	"github.com/zhitoo/golang-web-api/config"
+	"github.com/zhitoo/golang-web-api/database/db"
+	"github.com/zhitoo/golang-web-api/database/migrations"
 )
 
 func main() {

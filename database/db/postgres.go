@@ -1,10 +1,11 @@
 package db
 
 import (
-	"carsale/config"
 	"fmt"
 	"log"
 	"time"
+
+	"github.com/zhitoo/golang-web-api/config"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

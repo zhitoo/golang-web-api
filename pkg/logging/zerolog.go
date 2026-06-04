@@ -1,10 +1,11 @@
 package logging
 
 import (
-	"carsale/config"
 	"log"
 	"os"
 	"sync"
+
+	"github.com/zhitoo/golang-web-api/config"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/pkgerrors"

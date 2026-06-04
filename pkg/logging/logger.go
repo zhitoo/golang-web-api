@@ -1,6 +1,6 @@
 package logging
 
-import "carsale/config"
+import "github.com/zhitoo/golang-web-api/config"
 
 type Logger interface {
 	Init()

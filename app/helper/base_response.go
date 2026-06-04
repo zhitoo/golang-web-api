@@ -1,6 +1,6 @@
 package helper
 
-import "carsale/app/validations"
+import "github.com/zhitoo/golang-web-api/app/validations"
 
 type BaseHttpResponse struct {
 	Result           any                            `json:"result"`

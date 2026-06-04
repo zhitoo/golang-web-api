@@ -2,10 +2,11 @@ package middlewares
 
 import (
 	"bytes"
-	"carsale/config"
-	"carsale/pkg/logging"
 	"io"
 	"time"
+
+	"github.com/zhitoo/golang-web-api/config"
+	"github.com/zhitoo/golang-web-api/pkg/logging"
 
 	"github.com/gin-gonic/gin"
 )

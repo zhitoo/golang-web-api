@@ -1,11 +1,11 @@
 package main
 
 import (
-	"carsale/app"
-	"carsale/config"
-	"carsale/database/cache"
-	"carsale/database/db"
-	"carsale/pkg/logging"
+	"github.com/zhitoo/golang-web-api/app"
+	"github.com/zhitoo/golang-web-api/config"
+	"github.com/zhitoo/golang-web-api/database/cache"
+	"github.com/zhitoo/golang-web-api/database/db"
+	"github.com/zhitoo/golang-web-api/pkg/logging"
 )
 
 // @securityDefinitaions.apiKey AuthBearer

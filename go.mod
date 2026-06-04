@@ -1,4 +1,4 @@
-module carsale
+module github.com/zhitoo/golang-web-api
 
 go 1.26.3
 
