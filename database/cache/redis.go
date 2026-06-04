@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -41,4 +42,29 @@ func GetRedis() *redis.Client {
 
 func CloseRedis() {
 	redisClient.Close()
+}
+
+func SetValue[T any](key string, value T, expiration time.Duration) error {
+	ctx := context.Background()
+	jsonValue, err := json.Marshal(value)
+	if err != nil {
+		return err
+	}
+	return redisClient.Set(ctx, key, jsonValue, expiration).Err()
+}
+
+func GetValue[T any](key string) (T, error) {
+	ctx := context.Background()
+	value, err := redisClient.Get(ctx, key).Result()
+	var result T
+	if err != nil {
+		return result, err
+	}
+	err = json.Unmarshal([]byte(value), &result)
+	return result, err
+}
+
+func DeleteValue(key string) error {
+	ctx := context.Background()
+	return redisClient.Del(ctx, key).Err()
 }

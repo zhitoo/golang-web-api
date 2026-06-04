@@ -1,6 +1,8 @@
 package response
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/zhitoo/golang-web-api/app/validations"
 )
@@ -45,9 +47,21 @@ func (bh *baseHttpResponse) SetError(err error) *baseHttpResponse {
 
 	bh.ValidationErrors = validations.GetValidationErrors(err)
 
+	if bh.Success {
+		bh.Success = false
+	}
+
+	if bh.HttpSatatusCode == http.StatusOK {
+		bh.HttpSatatusCode = http.StatusBadRequest
+	}
+
 	return bh
 }
 
 func (bh *baseHttpResponse) Json(c *gin.Context) {
+	if bh.Error != nil {
+		c.AbortWithStatusJSON(bh.HttpSatatusCode, bh)
+		return
+	}
 	c.JSON(bh.HttpSatatusCode, bh)
 }

@@ -1,4 +1,5 @@
 App:
+  Env: "local"
   Name: "Test"
   Lang: "fa"
 Server:

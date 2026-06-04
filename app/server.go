@@ -5,7 +5,9 @@ import (
 
 	"github.com/zhitoo/golang-web-api/app/middlewares"
 	"github.com/zhitoo/golang-web-api/app/modules/health"
+	"github.com/zhitoo/golang-web-api/app/modules/otp"
 	"github.com/zhitoo/golang-web-api/app/modules/test"
+	"github.com/zhitoo/golang-web-api/app/modules/user"
 	"github.com/zhitoo/golang-web-api/app/validations"
 	"github.com/zhitoo/golang-web-api/config"
 
@@ -44,6 +46,8 @@ func RegisterRoutes(r *gin.Engine) {
 		{
 			health.Routes(v1.Group("/health"))
 			test.Routes(v1.Group("/test"))
+			otp.Routes(v1.Group("/otp"))
+			user.Routes(v1.Group("/users"))
 		}
 	}
 }

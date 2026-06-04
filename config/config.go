@@ -12,6 +12,7 @@ import (
 )
 
 type AppConfig struct {
+	Env  string
 	Name string
 	Lang string
 }
