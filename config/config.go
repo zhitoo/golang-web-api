@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 )
 
@@ -114,7 +115,10 @@ func ParseConfig(v *viper.Viper) (*Config, error) {
 }
 
 func GetConfig() *Config {
+	_ = godotenv.Load() // loads .env from current working directory
+
 	cfgPath := getConfigFileName(os.Getenv("APP_ENV"))
+
 	log.Printf("Loading config from: %s", cfgPath)
 
 	v, err := LoadConfig(cfgPath, "yml")
