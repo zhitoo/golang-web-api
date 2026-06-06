@@ -1,38 +1,37 @@
 package logging
 
-type Categoty string
-type SubCategoty string
+type Category string
+type SubCategory string
 type ExtraKey string
 
 const (
-	General         Categoty = "General"
-	Internal        Categoty = "Internal"
-	Postgres        Categoty = "Postgres"
-	Redis           Categoty = "Redis"
-	RequestResponse Categoty = "RequestResponse"
+	General         Category = "General"
+	Internal        Category = "Internal"
+	Postgres        Category = "Postgres"
+	Redis           Category = "Redis"
+	RequestResponse Category = "RequestResponse"
 )
 
 const (
 	//General
-	Startup         SubCategoty = "Startub"
-	ExternalService SubCategoty = "ExternalService"
+	Startup         SubCategory = "Startup"
+	ExternalService SubCategory = "ExternalService"
 
 	//Postgres
-	Migration SubCategoty = "Migration"
-	Select    SubCategoty = "Select"
-	Rollback  SubCategoty = "Rollback"
-	Update    SubCategoty = "Update"
-	Delete    SubCategoty = "Delete"
-	Insert    SubCategoty = "Insert"
-
+	Migration SubCategory = "Migration"
+	Select    SubCategory = "Select"
+	Rollback  SubCategory = "Rollback"
+	Update    SubCategory = "Update"
+	Delete    SubCategory = "Delete"
+	Insert    SubCategory = "Insert"
 	//Internal
-	Api                 SubCategoty = "Api"
-	HashPassword        SubCategoty = "HashPassword"
-	DefaultRoleNotFound SubCategoty = "DefaultRoleNotFound"
+	Api                 SubCategory = "Api"
+	HashPassword        SubCategory = "HashPassword"
+	DefaultRoleNotFound SubCategory = "DefaultRoleNotFound"
 
 	//Validation
-	MobileValidation   SubCategoty = "MobileValidation"
-	PasswordValidation SubCategoty = "PasswordValidation"
+	MobileValidation   SubCategory = "MobileValidation"
+	PasswordValidation SubCategory = "PasswordValidation"
 )
 
 const (

@@ -13,18 +13,19 @@ func main() {
 
 	logger := logging.NewLogger(cfg)
 
-	logger.Info(logging.General, logging.Startup, "app starting", nil)
+	startupLog := logger.With(logging.General, logging.Startup)
+	startupLog.Info("app starting", nil)
 
 	err := cache.InitRedis(cfg)
 	defer cache.CloseRedis()
 	if err != nil {
-		logger.Fatal(logging.Redis, logging.Startup, err.Error(), nil)
+		logger.With(logging.Redis, logging.Startup).Fatal(err.Error(), nil)
 	}
 
 	err = db.InitDb(cfg)
 	defer db.CloseDb()
 	if err != nil {
-		logger.Fatal(logging.Postgres, logging.Startup, err.Error(), nil)
+		logger.With(logging.Postgres, logging.Startup).Fatal(err.Error(), nil)
 	}
 
 	app.InitServer(cfg)

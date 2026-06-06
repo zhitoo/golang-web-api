@@ -28,11 +28,11 @@ func (w bodyLogWriter) WriteString(s string) (int, error) {
 }
 
 func DefaultStructuredLogger(cfg *config.Config) gin.HandlerFunc {
-	logger := logging.NewLogger(cfg)
-	return structuredLogger(logger)
+	log := logging.NewLogger(cfg).With(logging.RequestResponse, logging.Api)
+	return structuredLogger(log)
 }
 
-func structuredLogger(logger logging.Logger) gin.HandlerFunc {
+func structuredLogger(log logging.ScopedLogger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		blw := &bodyLogWriter{body: bytes.NewBufferString(""), ResponseWriter: c.Writer}
 		start := time.Now()
@@ -72,6 +72,6 @@ func structuredLogger(logger logging.Logger) gin.HandlerFunc {
 		keys[logging.RequestBody] = string(bodyBytes)
 		keys[logging.ResponseBody] = blw.body.String()
 
-		logger.Info(logging.RequestResponse, logging.Api, "", keys)
+		log.Info("", keys)
 	}
 }

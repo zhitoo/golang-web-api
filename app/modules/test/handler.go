@@ -1,13 +1,21 @@
 package test
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/zhitoo/golang-web-api/app/response"
+	"github.com/zhitoo/golang-web-api/config"
+	"github.com/zhitoo/golang-web-api/pkg/logging"
 )
+
+var log logging.ScopedLogger
+
+func init() {
+	cfg := config.GetConfig()
+	log = logging.NewLogger(cfg).With(logging.Internal, logging.Api)
+}
 
 var List []int = []int{}
 
@@ -19,7 +27,7 @@ func NewHandler() *Handler {
 
 func (h *Handler) List(c *gin.Context) {
 	for i := 0; i < 99999999999; i++ {
-		log.Println(i)
+		log.Infof("%d", i)
 	}
 	c.String(http.StatusOK, "list")
 }
@@ -29,15 +37,15 @@ func (h *Handler) Show(c *gin.Context) {
 }
 
 func (h *Handler) Store(c *gin.Context) {
-	//form := new(forms.CreateTestForm)
 	id, err := strconv.Atoi(c.PostForm("id"))
 	if err != nil {
+		log.Warn("invalid id param", map[logging.ExtraKey]any{logging.ErrorMessage: err.Error()})
 		c.String(http.StatusBadRequest, "id must be an integer")
 		return
 	}
 
 	List = append(List, id)
-	log.Println(List)
+	log.Infof("list updated: %v", List)
 	c.String(http.StatusOK, "store: "+strconv.Itoa(id))
 }
 
@@ -48,11 +56,9 @@ func (h *Handler) HeaderBinder1(c *gin.Context) {
 		"result": "HeaderBinder1",
 		"UserId": userId,
 	})
-
 }
 
 func (h *Handler) HeaderBinder2(c *gin.Context) {
-
 	heads := new(struct {
 		UserId  string
 		Browser string
@@ -63,7 +69,6 @@ func (h *Handler) HeaderBinder2(c *gin.Context) {
 		"result": "HeaderBinder2",
 		"header": heads,
 	})
-
 }
 
 func (t *Handler) QueryBinder1(c *gin.Context) {
@@ -74,7 +79,6 @@ func (t *Handler) QueryBinder1(c *gin.Context) {
 		"id":   id,
 		"name": name,
 	})
-
 }
 
 func (t *Handler) QueryBinder2(c *gin.Context) {
@@ -85,7 +89,6 @@ func (t *Handler) QueryBinder2(c *gin.Context) {
 		"ids":  id,
 		"name": name,
 	})
-
 }
 
 func (t *Handler) UriBinder(c *gin.Context) {
@@ -96,7 +99,6 @@ func (t *Handler) UriBinder(c *gin.Context) {
 		"id":   id,
 		"name": name,
 	})
-
 }
 
 type user struct {
@@ -117,9 +119,8 @@ type user struct {
 // @Router /v1/test/body-binder [post]
 func (t *Handler) BodyBinder(c *gin.Context) {
 	u := new(user)
-	err := c.ShouldBindJSON(u)
-
-	if err != nil {
+	if err := c.ShouldBindJSON(u); err != nil {
+		log.Warn("invalid body", map[logging.ExtraKey]any{logging.ErrorMessage: err.Error()})
 		response.NewReponse().SetResult(nil).SetError(err).SetStatus(false).SetHttpStatusCode(422).Json(c)
 		return
 	}
@@ -134,8 +135,8 @@ func (t *Handler) BodyBinder(c *gin.Context) {
 func (t *Handler) FileBinder(c *gin.Context) {
 	file, _ := c.FormFile("file")
 
-	err := c.SaveUploadedFile(file, "./assets/"+file.Filename)
-	if err != nil {
+	if err := c.SaveUploadedFile(file, "./assets/"+file.Filename); err != nil {
+		log.Error("failed to save uploaded file", map[logging.ExtraKey]any{logging.ErrorMessage: err.Error()})
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
