@@ -32,3 +32,8 @@ Redis:
   PoolTimeout: 15
   IdleCheckFrequency: 500
   IdleTimeout: 500
+JWT:
+  Secret: "secret"
+  RefreshSecret: "refresh_secret"
+  AccessTokenExpireDuration: 60
+  RefreshTokenExpireDuration: 3600

@@ -57,6 +57,13 @@ type RedisConfig struct {
 	IdleTimeout        time.Duration
 }
 
+type JWTConfig struct {
+	Secret                     string
+	RefreshSecret              string
+	AccessTokenExpireDuration  time.Duration
+	RefreshTokenExpireDuration time.Duration
+}
+
 type Config struct {
 	App      AppConfig
 	Server   ServerConfig
@@ -64,6 +71,7 @@ type Config struct {
 	Cors     CorsConfig
 	Postgres PostgresConfig
 	Redis    RedisConfig
+	JWT      JWTConfig
 }
 
 func getConfigFileName(env string) string {
