@@ -22,7 +22,7 @@ import (
 func InitServer(cfg *config.Config) {
 	r := gin.New()
 
-	RegisterValidatores()
+	RegisterValidators()
 
 	r.Use(middlewares.DefaultStructuredLogger(cfg), gin.Logger(), gin.Recovery())
 
@@ -32,7 +32,7 @@ func InitServer(cfg *config.Config) {
 	r.Run(fmt.Sprintf(":%s", cfg.Server.Port))
 }
 
-func RegisterValidatores() {
+func RegisterValidators() {
 	val, ok := binding.Validator.Engine().(*validator.Validate)
 	if ok {
 		val.RegisterValidation("irmobile", validations.IranianMobileNumberValidator, true)

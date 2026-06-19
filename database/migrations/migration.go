@@ -20,7 +20,7 @@ func getMigrationsDir() string {
 }
 
 func getSourceUrl() string {
-	sourceURL := "file://./src/data/migrations"
+	sourceURL := "file://./database/migrations"
 	return sourceURL
 }
 

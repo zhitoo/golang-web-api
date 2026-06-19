@@ -10,6 +10,7 @@ import (
 	"github.com/zhitoo/golang-web-api/config"
 	"github.com/zhitoo/golang-web-api/database/db"
 	"github.com/zhitoo/golang-web-api/pkg/logging"
+	"github.com/zhitoo/golang-web-api/pkg/utils"
 )
 
 var log logging.ScopedLogger
@@ -22,7 +23,8 @@ func init() {
 func Routes(r *gin.RouterGroup) {
 
 	r.GET("", func(c *gin.Context) {
-		response.NewReponse().SetResult("users list").Json(c)
+		str := utils.RandomString(6)
+		response.NewReponse().SetResult(str).Json(c)
 	})
 
 	r.POST("/login", func(c *gin.Context) {
@@ -47,7 +49,11 @@ func Routes(r *gin.RouterGroup) {
 
 		if result.Error != nil {
 			log.Info("user not found, creating new user", nil)
-			user = models.User{MobileNumber: request.Mobile, Username: request.Mobile, Password: "createAndHashARandomPassword"}
+			password, err := utils.HashPassword(utils.RandomString(16))
+			if err != nil {
+				response.NewReponse().SetError(err).SetHttpStatusCode(http.StatusInternalServerError)
+			}
+			user = models.User{MobileNumber: request.Mobile, Username: request.Mobile, Password: password}
 			if err := gorm.Create(&user).Error; err != nil {
 				log.Error("failed to create user", map[logging.ExtraKey]any{logging.ErrorMessage: err.Error()})
 				response.NewReponse().SetError(err).SetHttpStatusCode(http.StatusInternalServerError).Json(c)
@@ -57,6 +63,6 @@ func Routes(r *gin.RouterGroup) {
 
 		// send auth token to user
 
-		response.NewReponse().SetResult("welcom").Json(c)
+		response.NewReponse().SetResult("welcome").Json(c)
 	})
 }

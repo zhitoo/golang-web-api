@@ -1,6 +1,7 @@
 go.work
 .vscode/
 tmp/
+.idea
 
 *.log
 artisan

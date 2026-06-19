@@ -32,7 +32,10 @@ func VerifyOTP(mobile string, otp string) error {
 	if cachedOTP != otp {
 		return fmt.Errorf("invalid OTP")
 	}
-	cache.DeleteValue("otp:" + mobile)
+	err = cache.DeleteValue("otp:" + mobile)
+	if err != nil {
+		return err
+	}
 	log.Info("OTP verified", nil)
 	return nil
 }
