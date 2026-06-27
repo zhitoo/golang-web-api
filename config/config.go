@@ -64,6 +64,12 @@ type JWTConfig struct {
 	RefreshTokenExpireDuration time.Duration
 }
 
+type NatsConfig struct {
+	Host     string
+	Port     string
+	Password string
+}
+
 type Config struct {
 	App      AppConfig
 	Server   ServerConfig
@@ -72,6 +78,7 @@ type Config struct {
 	Postgres PostgresConfig
 	Redis    RedisConfig
 	JWT      JWTConfig
+	Nats     NatsConfig
 }
 
 func getConfigFileName(env string) string {

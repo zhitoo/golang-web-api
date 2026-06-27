@@ -37,3 +37,7 @@ JWT:
   RefreshSecret: "refresh_secret"
   AccessTokenExpireDuration: 3600
   RefreshTokenExpireDuration: 36000
+Nats:
+  Host: nats_con
+  Port: 4222
+  Password: secret

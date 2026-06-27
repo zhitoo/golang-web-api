@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/zhitoo/golang-web-api/app"
+	"github.com/zhitoo/golang-web-api/broker"
 	"github.com/zhitoo/golang-web-api/config"
 	"github.com/zhitoo/golang-web-api/database/cache"
 	"github.com/zhitoo/golang-web-api/database/db"
@@ -28,6 +29,12 @@ func main() {
 	defer cache.CloseRedis()
 	if err != nil {
 		logger.With(logging.Redis, logging.Startup).Fatal(err.Error(), nil)
+	}
+
+	err = broker.InitNats(cfg)
+	defer broker.CloseNats()
+	if err != nil {
+		logger.With(logging.General, logging.Startup).Fatal(err.Error(), nil)
 	}
 
 	err = db.InitDb(cfg)

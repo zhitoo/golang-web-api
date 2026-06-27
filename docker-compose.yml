@@ -14,6 +14,7 @@ services:
     depends_on:
       - postgres
       - redis
+      - nats
     networks:
       - app_net
     restart: unless-stopped
@@ -140,6 +141,20 @@ services:
       - redis:/data
     ports:
       - "${REDIS_PORT:-6385}:6379"
+    networks:
+      - app_net
+    restart: unless-stopped
+
+ ####################### NATS #######################
+  nats:
+    image: nats:latest
+    container_name: nats_con
+    command: ["--config", "/etc/nats/nats.conf"]
+    volumes:
+      - ./docker/nats/nats.conf:/etc/nats/nats.conf:ro
+    ports:
+      - "${NATS_PORT:-4222}:4222"
+      - "${NATS_MONITOR_PORT:-8222}:8222"
     networks:
       - app_net
     restart: unless-stopped
