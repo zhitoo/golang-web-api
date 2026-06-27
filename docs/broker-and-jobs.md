@@ -5,7 +5,16 @@
 ### Example 1: Simple Job (Default Queue)
 
 ```go
-// 1. Define job
+// 📁 app/modules/notification/email_job.go
+package notification
+
+import (
+    "context"
+    "fmt"
+
+    "github.com/zhitoo/golang-web-api/pkg/job"
+)
+
 type SendWelcomeEmailJob struct {
     job.Base
     To   string `json:"to"`
@@ -22,17 +31,55 @@ func init() {
         return &SendWelcomeEmailJob{}
     })
 }
+```
 
-// 2. Dispatch
-job.Dispatch(&SendWelcomeEmailJob{To: "ali@test.com", Name: "Ali"})
+```go
+// 📁 app/modules/notification/service.go
+package notification
 
-// 3. Worker (main.go)
-job.NewWorker(broker, "default").Start()
+import "github.com/zhitoo/golang-web-api/pkg/job"
+
+func RegisterUser(name, email string) error {
+    // user registration logic...
+
+    job.Dispatch(&SendWelcomeEmailJob{To: email, Name: name})
+    return nil
+}
+```
+
+```go
+// 📁 cmd/main.go
+package main
+
+import "github.com/zhitoo/golang-web-api/pkg/job"
+
+func main() {
+    // ... broker setup ...
+
+    job.NewWorker(broker, "default").Start()
+}
 ```
 
 ### Example 2: Job with Custom Queue
 
 ```go
+// 📁 app/modules/otp/sms_job.go
+package otp
+
+import (
+    "context"
+
+    "github.com/zhitoo/golang-web-api/pkg/job"
+    "github.com/zhitoo/golang-web-api/pkg/logging"
+)
+
+var log logging.ScopedLogger
+
+func init() {
+    log = logging.NewLogger(config.GetConfig()).With(logging.General, logging.Api)
+    job.RegisterJob("SendSmsJob", func() job.JobHandler { return &SendSmsJob{} })
+}
+
 type SendSmsJob struct {
     job.Base
     Mobile string `json:"mobile"`
@@ -40,28 +87,66 @@ type SendSmsJob struct {
 }
 
 func (j *SendSmsJob) Handle(ctx context.Context) error {
+    log.Info("sending SMS", map[logging.ExtraKey]any{"mobile": j.Mobile})
     return smsProvider.Send(j.Mobile, j.Body)
 }
 
-func (j *SendSmsJob) Queue() string { return "sms" }  // custom queue
+func (j *SendSmsJob) Queue() string { return "sms" }
+```
 
-func init() {
-    job.RegisterJob("SendSmsJob", func() job.JobHandler { return &SendSmsJob{} })
+```go
+// 📁 app/modules/otp/service.go
+package otp
+
+import (
+    "fmt"
+    "time"
+
+    "github.com/zhitoo/golang-web-api/database/cache"
+    "github.com/zhitoo/golang-web-api/pkg/job"
+)
+
+func SendOTP(mobile string) (string, error) {
+    otp := fmt.Sprintf("%06d", rand.Intn(1000000))
+
+    job.Dispatch(&SendSmsJob{
+        Mobile: mobile,
+        Body:   fmt.Sprintf("Your code: %s", otp),
+    })
+
+    cache.SetValue("otp:"+mobile, otp, 2*time.Minute)
+    return otp, nil
 }
+```
 
-// Dispatch
-job.Dispatch(&SendSmsJob{Mobile: "09121234567", Body: "Your code: 123456"})
+```go
+// 📁 cmd/main.go
+package main
 
-// Worker (main.go)
-job.NewWorker(broker, "sms").Start()
+import "github.com/zhitoo/golang-web-api/pkg/job"
+
+func main() {
+    // ... broker setup ...
+
+    job.NewWorker(broker, "sms").Start()
+}
 ```
 
 ### Example 3: Multiple Workers (Load Balancing)
 
 ```go
-// 3 workers on same queue - each job goes to ONE worker
-for i := 0; i < 3; i++ {
-    job.NewWorker(broker, "sms").Start()
+// 📁 cmd/main.go
+package main
+
+import "github.com/zhitoo/golang-web-api/pkg/job"
+
+func main() {
+    // ... broker setup ...
+
+    // 3 workers - each job goes to ONE worker
+    for i := 0; i < 3; i++ {
+        job.NewWorker(broker, "sms").Start()
+    }
 }
 ```
 
@@ -78,36 +163,67 @@ POST /otp/send ──▶ ├──────────────┤ ──
 ### Example 4: Multiple Queues
 
 ```go
-// Different jobs, different queues
+// 📁 app/modules/otp/sms_job.go
 func (j *SendSmsJob) Queue() string { return "sms" }
-func (j *SendEmailJob) Queue() string { return "email" }
-func (j *ProcessOrderJob) Queue() string { return "order" }
 
-// Start workers for each queue
-job.NewWorker(broker, "sms").Start()
-job.NewWorker(broker, "email").Start()
-job.NewWorker(broker, "order").Start()
+// 📁 app/modules/notification/email_job.go
+func (j *SendEmailJob) Queue() string { return "email" }
+
+// 📁 app/modules/order/order_job.go
+func (j *ProcessOrderJob) Queue() string { return "order" }
+```
+
+```go
+// 📁 cmd/main.go
+package main
+
+import "github.com/zhitoo/golang-web-api/pkg/job"
+
+func main() {
+    // ... broker setup ...
+
+    job.NewWorker(broker, "sms").Start()
+    job.NewWorker(broker, "email").Start()
+    job.NewWorker(broker, "order").Start()
+}
 ```
 
 ### Example 5: Dispatch to Specific Queue
 
 ```go
-// Job has default queue "email"
-job.Dispatch(&SendEmailJob{To: "user@test.com"})
+// 📁 app/modules/notification/service.go
+package notification
 
-// Override queue at dispatch time
-job.DispatchOnQueue(&SendEmailJob{To: "user@test.com"}, "priority")
+import "github.com/zhitoo/golang-web-api/pkg/job"
+
+func SendNotification(user *User, message string) {
+    // Normal: uses Queue() which returns "email"
+    job.Dispatch(&SendEmailJob{To: user.Email, Body: message})
+
+    // Override: force "priority" queue
+    job.DispatchOnQueue(&SendEmailJob{To: user.Email, Body: message}, "priority")
+}
 ```
 
 ### Example 6: Durable Jobs (Survive Restart)
 
 ```go
-// Startup: create stream
-d.EnsureStream("JOBS", []string{"jobs.>"})
+// 📁 cmd/main.go
+package main
 
-// Worker with durable subscription
-w := job.NewWorker(broker, "sms")
-w.StartDurable("sms-worker-1")
+import "github.com/zhitoo/golang-web-api/pkg/job"
+
+func main() {
+    d := job.NewDispatcher(broker)
+    job.SetDispatcher(d)
+
+    // Create stream on startup
+    d.EnsureStream("JOBS", []string{"jobs.>"})
+
+    // Durable worker
+    w := job.NewWorker(broker, "sms")
+    w.StartDurable("sms-worker-1")
+}
 ```
 
 ---
@@ -132,7 +248,9 @@ Three layers:
 ### Broker Layer
 
 ```go
-// broker/broker.go
+// 📁 broker/broker.go
+package broker
+
 type Broker interface {
     Publish(subject string, data []byte) error
     Subscribe(subject string, handler func(msg []byte)) error
@@ -147,6 +265,29 @@ type DurableBroker interface {
 }
 ```
 
+```go
+// 📁 broker/nats/nats.go
+package nats
+
+import (
+    "github.com/nats-io/nats.go"
+    "github.com/zhitoo/golang-web-api/config"
+)
+
+type NatsBroker struct {
+    conn *nats.Conn
+    js   nats.JetStreamContext
+    cfg  *config.Config
+}
+
+func (b *NatsBroker) QueueSubscribe(subject string, queue string, handler func(msg []byte)) error {
+    _, err := b.conn.QueueSubscribe(subject, queue, func(m *nats.Msg) {
+        handler(m.Data)
+    })
+    return err
+}
+```
+
 **Subscribe vs QueueSubscribe:**
 
 | Method | Behavior | Use Case |
@@ -154,21 +295,30 @@ type DurableBroker interface {
 | `Subscribe` | Every subscriber gets every message (fan-out) | Broadcasting, events |
 | `QueueSubscribe` | One subscriber per message (load-balanced) | Job workers |
 
-**Durable (JetStream):**
-- Messages survive broker restarts
-- Automatic retry on failure
-- Stream must be created before publishing
-
 ### Job Package (`pkg/job/`)
 
 #### Job Struct
 
 ```go
+// 📁 pkg/job/job.go
+package job
+
+import "time"
+
+type Status string
+
+const (
+    Pending    Status = "pending"
+    Processing Status = "processing"
+    Success    Status = "success"
+    Failed     Status = "failed"
+)
+
 type Job struct {
     ID        string
     Type      string    // e.g., "SendSmsJob"
     Payload   []byte    // JSON-serialized job data
-    Status    Status    // pending, processing, success, failed
+    Status    Status
     Attempts  int
     MaxRetry  int
     CreatedAt time.Time
@@ -179,66 +329,148 @@ type Job struct {
 #### JobHandler Interface
 
 ```go
+// 📁 pkg/job/handler.go
+package job
+
+import "context"
+
 type JobHandler interface {
     Handle(ctx context.Context) error
     Queue() string
 }
 
 type Base struct{}
+
 func (b Base) Queue() string { return "default" }
 ```
 
 #### Registry
 
-Maps job type names to factory functions for deserialization:
-
 ```go
+// 📁 pkg/job/registry.go
+package job
+
+import "reflect"
+
+type Factory func() JobHandler
+
 var registry = map[string]Factory{}
 
 func RegisterJob(name string, factory Factory) {
     registry[name] = factory
+}
+
+func getFactory(name string) (Factory, bool) {
+    f, ok := registry[name]
+    return f, ok
+}
+
+func jobTypeName(j JobHandler) string {
+    t := reflect.TypeOf(j)
+    if t.Kind() == reflect.Ptr {
+        t = t.Elem()
+    }
+    return t.Name()
 }
 ```
 
 #### Dispatch
 
 ```go
-func Dispatch(j JobHandler) error              // uses j.Queue()
-func DispatchOnQueue(j JobHandler, queue string) // explicit queue
-```
+// 📁 pkg/job/dispatch.go
+package job
 
-Flow:
-1. Marshal job to JSON
-2. Create `Job` struct with ID, type name, payload
-3. Publish to `jobs.<queue>` subject
+import (
+    "encoding/json"
+    "time"
+
+    "github.com/google/uuid"
+)
+
+var globalDispatcher *Dispatcher
+
+func SetDispatcher(d *Dispatcher) {
+    globalDispatcher = d
+}
+
+func Dispatch(j JobHandler) error {
+    return DispatchOnQueue(j, j.Queue())
+}
+
+func DispatchOnQueue(j JobHandler, queue string) error {
+    payload, _ := json.Marshal(j)
+
+    jb := Job{
+        ID:        uuid.New().String(),
+        Type:      jobTypeName(j),
+        Payload:   payload,
+        Status:    Pending,
+        CreatedAt: time.Now(),
+    }
+
+    subject := "jobs." + queue
+    return globalDispatcher.Dispatch(subject, jb)
+}
+```
 
 #### Worker
 
 ```go
-func NewWorker(broker Broker, queue string) *Worker
-func (w *Worker) Start() error                    // QueueSubscribe
-func (w *Worker) StartDurable(durableString) error  // JetStream
-```
+// 📁 pkg/job/worker.go
+package job
 
-Flow:
-1. Subscribe to `jobs.<queue>` with QueueSubscribe
-2. On message: unmarshal `Job` struct
-3. Look up factory in registry by `Type`
-4. Create handler instance, unmarshal payload
-5. Call `handler.Handle(ctx)`
+import (
+    "context"
+    "encoding/json"
+)
+
+type Worker struct {
+    consumer *Consumer
+    queue    string
+}
+
+func NewWorker(broker Broker, queue string) *Worker {
+    w := &Worker{queue: queue}
+    w.consumer = NewConsumer(broker, w.process)
+    return w
+}
+
+func (w *Worker) Start() error {
+    subject := "jobs." + w.queue
+    return w.consumer.ConsumeQueue(subject, w.queue)
+}
+
+func (w *Worker) process(j Job) error {
+    factory, _ := getFactory(j.Type)
+    handler := factory()
+    json.Unmarshal(j.Payload, handler)
+    return handler.Handle(context.Background())
+}
+```
 
 ### Complete Example: OTP SMS
 
 **Step 1: Define the Job**
 
 ```go
-// app/modules/otp/sms_job.go
+// 📁 app/modules/otp/sms_job.go
 package otp
 
 import (
     "context"
+
+    "github.com/zhitoo/golang-web-api/config"
     "github.com/zhitoo/golang-web-api/pkg/job"
+    "github.com/zhitoo/golang-web-api/pkg/logging"
 )
+
+var log logging.ScopedLogger
+
+func init() {
+    cfg := config.GetConfig()
+    log = logging.NewLogger(cfg).With(logging.General, logging.Api)
+    job.RegisterJob("SendSmsJob", func() job.JobHandler { return &SendSmsJob{} })
+}
 
 type SendSmsJob struct {
     job.Base
@@ -247,22 +479,29 @@ type SendSmsJob struct {
 }
 
 func (j *SendSmsJob) Handle(ctx context.Context) error {
+    log.Info("sending SMS", map[logging.ExtraKey]any{"mobile": j.Mobile})
     return smsProvider.Send(j.Mobile, j.Body)
 }
 
 func (j *SendSmsJob) Queue() string { return "sms" }
-
-func init() {
-    job.RegisterJob("SendSmsJob", func() job.JobHandler { return &SendSmsJob{} })
-}
 ```
 
 **Step 2: Dispatch the Job**
 
 ```go
-// app/modules/otp/service.go
+// 📁 app/modules/otp/service.go
+package otp
+
+import (
+    "fmt"
+    "time"
+
+    "github.com/zhitoo/golang-web-api/database/cache"
+    "github.com/zhitoo/golang-web-api/pkg/job"
+)
+
 func SendOTP(mobile string) (string, error) {
-    otp := generateOTP()
+    otp := fmt.Sprintf("%06d", rand.Intn(1000000))
 
     job.Dispatch(&SendSmsJob{
         Mobile: mobile,
@@ -277,17 +516,45 @@ func SendOTP(mobile string) (string, error) {
 **Step 3: Start the Worker**
 
 ```go
-// cmd/main.go
+// 📁 cmd/main.go
+package main
+
+import (
+    "github.com/zhitoo/golang-web-api/app"
+    "github.com/zhitoo/golang-web-api/broker"
+    "github.com/zhitoo/golang-web-api/config"
+    "github.com/zhitoo/golang-web-api/database/cache"
+    "github.com/zhitoo/golang-web-api/database/db"
+    "github.com/zhitoo/golang-web-api/pkg/job"
+    "github.com/zhitoo/golang-web-api/pkg/logging"
+)
+
 func main() {
-    d := job.NewDispatcher(broker)
+    cfg := config.GetConfig()
+    logger := logging.NewLogger(cfg)
+
+    cache.InitRedis(cfg)
+    defer cache.CloseRedis()
+
+    b, _ := broker.NewBroker(cfg)
+    b.Connect()
+    defer b.Close()
+
+    d := job.NewDispatcher(b)
     job.SetDispatcher(d)
 
-    smsWorker := job.NewWorker(broker, "sms")
+    // Start SMS worker
+    smsWorker := job.NewWorker(b, "sms")
     smsWorker.Start()
+
+    db.InitDb(cfg)
+    defer db.CloseDb()
+
+    app.InitServer(cfg)
 }
 ```
 
-**Step 4: Run**
+**Step 4: Flow**
 
 1. User calls `POST /api/v1/otp/send`
 2. Handler calls `SendOTP()`
@@ -312,21 +579,21 @@ All job subjects follow: `jobs.<queue>`
 
 ```
 pkg/job/
-├── job.go          # Job struct, Broker, Dispatcher, Consumer
+├── job.go          # Job struct, Status, Broker, Dispatcher, Consumer
 ├── handler.go      # JobHandler interface, Base struct
 ├── registry.go     # RegisterJob, factory registry
-├── dispatch.go     # Dispatch, DispatchOnQueue
+├── dispatch.go     # Dispatch, DispatchOnQueue, SetDispatcher
 └── worker.go       # Worker with QueueSubscribe
 
 broker/
-├── broker.go       # Broker interface
+├── broker.go       # Broker interface, DurableBroker interface
 ├── factory.go      # NewBroker factory
 └── nats/
     └── nats.go     # NATS implementation
 
 app/modules/otp/
-├── sms_job.go      # SendSmsJob definition
-└── service.go      # Dispatches SendSmsJob in SendOTP()
+├── sms_job.go      # SendSmsJob definition + init() registration
+└── service.go      # SendOTP() dispatches SendSmsJob
 ```
 
 ## Debugging
