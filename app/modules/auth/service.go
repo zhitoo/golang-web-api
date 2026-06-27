@@ -16,7 +16,7 @@ func NewAuthService(cfg *config.Config) *AuthService {
 	return &AuthService{cfg: cfg}
 }
 
-type tokenDto struct {
+type TokenDto struct {
 	UserId   string   `json:"user_id"`
 	Username string   `json:"username"`
 	Roles    []string `json:"roles"`
@@ -29,7 +29,7 @@ type AuthToken struct {
 	RefreshExpireAt int64  `json:"refresh_expire_at"`
 }
 
-func (s *AuthService) GenerateToken(token *tokenDto) (*AuthToken, error) {
+func (s *AuthService) GenerateToken(token *TokenDto) (*AuthToken, error) {
 	authToken := &AuthToken{}
 	authToken.AccessExpireAt = time.Now().Add(s.cfg.JWT.AccessTokenExpireDuration * time.Second).Unix()
 	authToken.RefreshExpireAt = time.Now().Add(s.cfg.JWT.RefreshTokenExpireDuration * time.Second).Unix()
@@ -69,40 +69,42 @@ func (s *AuthService) GenerateToken(token *tokenDto) (*AuthToken, error) {
 }
 
 func (s *AuthService) VerifyToken(token string) (*jwt.Token, error) {
-	t, err := jwt.Parse(token, func(token *jwt.Token) (any, error) {
-		_, ok := token.Method.(*jwt.SigningMethodHMAC)
-
-		if !ok {
-			return nil, fmt.Errorf("unexpected error duraing verify auth token")
+	return jwt.Parse(token, func(token *jwt.Token) (any, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method")
 		}
-
 		return []byte(s.cfg.JWT.Secret), nil
 	})
+}
 
+func (s *AuthService) VerifyRefreshToken(token string) (*jwt.Token, error) {
+	return jwt.Parse(token, func(token *jwt.Token) (any, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method")
+		}
+		return []byte(s.cfg.JWT.RefreshSecret), nil
+	})
+}
+
+func (s *AuthService) GetClaims(token string) (map[string]any, error) {
+	return s.extractClaims(s.VerifyToken(token))
+}
+
+func (s *AuthService) GetRefreshClaims(token string) (map[string]any, error) {
+	return s.extractClaims(s.VerifyRefreshToken(token))
+}
+
+func (s *AuthService) extractClaims(verifiedToken *jwt.Token, err error) (map[string]any, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	return t, nil
-}
-
-func (s *AuthService) GetClaims(token string) (claimMap map[string]any, err error) {
-	claimMap = map[string]any{}
-	verifiedToken, err := s.VerifyToken(token)
-
-	if err != nil {
-		return
-	}
-
 	claims, ok := verifiedToken.Claims.(jwt.MapClaims)
-
-	if ok && verifiedToken.Valid {
-		for k, v := range claims {
-			claimMap[k] = v
-		}
-		return
+	if !ok || !verifiedToken.Valid {
+		return nil, fmt.Errorf("invalid token claims")
 	}
-
-	return nil, fmt.Errorf("claim not found")
-
+	claimMap := make(map[string]any, len(claims))
+	for k, v := range claims {
+		claimMap[k] = v
+	}
+	return claimMap, nil
 }

@@ -24,14 +24,14 @@ func sendOTPHandler(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(request); err != nil {
 		log.Warn("invalid send OTP request", map[logging.ExtraKey]any{logging.ErrorMessage: err.Error()})
-		response.NewReponse().SetStatus(false).SetError(err).SetHttpStatusCode(http.StatusUnprocessableEntity).Json(c)
+		response.NewResponse().SetStatus(false).SetError(err).SetHttpStatusCode(http.StatusUnprocessableEntity).Json(c)
 		return
 	}
 
 	otp, err := SendOTP(request.Mobile)
 	if err != nil {
 		log.Error("failed to send OTP", map[logging.ExtraKey]any{logging.ErrorMessage: err.Error()})
-		response.NewReponse().SetStatus(false).SetError(err).SetHttpStatusCode(http.StatusBadRequest).Json(c)
+		response.NewResponse().SetStatus(false).SetError(err).SetHttpStatusCode(http.StatusBadRequest).Json(c)
 		return
 	}
 
@@ -45,21 +45,21 @@ func sendOTPHandler(c *gin.Context) {
 		}
 	}
 
-	response.NewReponse().SetResult(result).Json(c)
+	response.NewResponse().SetResult(result).Json(c)
 }
 
 func verifyOTPHandler(c *gin.Context) {
 	request := new(VerifyOTPRequest)
 	if err := c.ShouldBindJSON(request); err != nil {
 		log.Warn("invalid verify OTP request", map[logging.ExtraKey]any{logging.ErrorMessage: err.Error()})
-		response.NewReponse().SetStatus(false).SetError(err).SetHttpStatusCode(http.StatusUnprocessableEntity).Json(c)
+		response.NewResponse().SetStatus(false).SetError(err).SetHttpStatusCode(http.StatusUnprocessableEntity).Json(c)
 		return
 	}
 	err := VerifyOTP(request.Mobile, request.OTP)
 	if err != nil {
 		log.Warn("OTP verification failed", map[logging.ExtraKey]any{logging.ErrorMessage: err.Error()})
-		response.NewReponse().SetStatus(false).SetError(err).SetHttpStatusCode(http.StatusUnauthorized).Json(c)
+		response.NewResponse().SetStatus(false).SetError(err).SetHttpStatusCode(http.StatusUnauthorized).Json(c)
 		return
 	}
-	response.NewReponse().SetResult(":)").Json(c)
+	response.NewResponse().SetResult(":)").Json(c)
 }

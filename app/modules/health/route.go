@@ -10,6 +10,6 @@ func Routes(r *gin.RouterGroup) {
 	//r.Use(TestMiddleware())
 	r.GET("", func(c *gin.Context) {
 		HealthCheck()
-		response.NewReponse().SetResult(":)").Json(c)
+		response.NewResponse().SetResult(":)").Json(c)
 	})
 }

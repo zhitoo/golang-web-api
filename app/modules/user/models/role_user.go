@@ -7,6 +7,10 @@ type RoleUser struct {
 	UserId int
 }
 
+func (RoleUser) TableName() string {
+	return "role_user"
+}
+
 /*
 user -> n roles
 role -> n users

@@ -51,7 +51,7 @@ func LimitOTP() gin.HandlerFunc {
 		ip := c.ClientIP()
 
 		if !getLimiter(ipLimiters, ip).Allow() {
-			response.NewReponse().SetError(fmt.Errorf("too many requests from %s", ip)).SetHttpStatusCode(http.StatusTooManyRequests).Json(c)
+			response.NewResponse().SetError(fmt.Errorf("too many requests from %s", ip)).SetHttpStatusCode(http.StatusTooManyRequests).Json(c)
 			return
 		}
 

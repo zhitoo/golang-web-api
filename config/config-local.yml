@@ -14,7 +14,7 @@ Cors:
   AllowOrigins: "*"
 Postgres:
   Host: localhost
-  Port: 5432
+  Port: 5434
   User: postgres
   Password: secret
   DB: golang_web_api
@@ -22,7 +22,7 @@ Postgres:
   TimeZone: Asia/Tehran
 Redis:
   Host: localhost
-  Port: 6379
+  Port: 6385
   Password: password
   DB: 0
   DialTimeout: 5
@@ -35,5 +35,5 @@ Redis:
 JWT:
   Secret: "secret"
   RefreshSecret: "refresh_secret"
-  AccessTokenExpireDuration: 60
-  RefreshTokenExpireDuration: 3600
+  AccessTokenExpireDuration: 3600
+  RefreshTokenExpireDuration: 36000

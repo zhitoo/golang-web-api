@@ -10,15 +10,15 @@ import (
 type baseHttpResponse struct {
 	Result           any                            `json:"result"`
 	Success          bool                           `json:"success"`
-	HttpSatatusCode  int                            `json:"http_status_code"`
+	HttpStatusCode   int                            `json:"-"`
 	ValidationErrors *[]validations.ValidationError `json:"validation_errors,omitempty"`
 	Error            any                            `json:"error,omitempty"`
 }
 
-func NewReponse() *baseHttpResponse {
+func NewResponse() *baseHttpResponse {
 	res := new(baseHttpResponse)
 	res.Success = true
-	res.HttpSatatusCode = 200
+	res.HttpStatusCode = 200
 	res.Error = nil
 	res.ValidationErrors = nil
 	return res
@@ -37,7 +37,7 @@ func (bh *baseHttpResponse) SetStatus(success bool) *baseHttpResponse {
 }
 
 func (bh *baseHttpResponse) SetHttpStatusCode(httpStatusCode int) *baseHttpResponse {
-	bh.HttpSatatusCode = httpStatusCode
+	bh.HttpStatusCode = httpStatusCode
 
 	return bh
 }
@@ -51,8 +51,8 @@ func (bh *baseHttpResponse) SetError(err error) *baseHttpResponse {
 		bh.Success = false
 	}
 
-	if bh.HttpSatatusCode == http.StatusOK {
-		bh.HttpSatatusCode = http.StatusBadRequest
+	if bh.HttpStatusCode == http.StatusOK {
+		bh.HttpStatusCode = http.StatusBadRequest
 	}
 
 	return bh
@@ -60,8 +60,8 @@ func (bh *baseHttpResponse) SetError(err error) *baseHttpResponse {
 
 func (bh *baseHttpResponse) Json(c *gin.Context) {
 	if bh.Error != nil {
-		c.AbortWithStatusJSON(bh.HttpSatatusCode, bh)
+		c.AbortWithStatusJSON(bh.HttpStatusCode, bh)
 		return
 	}
-	c.JSON(bh.HttpSatatusCode, bh)
+	c.JSON(bh.HttpStatusCode, bh)
 }

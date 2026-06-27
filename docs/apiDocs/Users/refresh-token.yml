@@ -1,23 +1,20 @@
 info:
-  name: login
+  name: refresh-token
   type: http
-  seq: 8
+  seq: 4
 
 http:
   method: post
-  url: "{{baseUrl}}users/login"
-  headers:
-    - name: UserId
-      value: "1"
-    - name: Browser
-      value: bruno
+  url: "{{baseUrl}}users/refresh-token"
   body:
     type: json
     data: |-
       {
-        "mobile":"09227121074",
-        "otp":"847968"
+        "refresh_token":{{refresh_token}}
       }
+  auth:
+    type: bearer
+    token: "{{access_token}}"
 
 runtime:
   scripts:
@@ -25,7 +22,6 @@ runtime:
       code: |-
         let data = res.body;
         bru.setVar("access_token", data.result.access_token);
-        bru.setVar("refresh_token", data.result.refresh_token);
         console.log(data.result.access_token)
 
 settings:
