@@ -22,14 +22,25 @@ make serve             # build artisan + start server
 
 ### Environment variables (`.env`)
 
-| Variable | Description |
-|---|---|
-| `APP_ENV` | Config profile to load: `local` (default), `docker`, `production` |
-| `ELASTIC_PASSWORD` | Elasticsearch password |
-| `KIBANA_SYSTEM_PASSWORD` | Kibana system password |
-| `FILEBEAT_INTERNAL_PASSWORD` | Filebeat internal password |
+| Variable | Default | Description |
+|---|---|---|
+| `APP_ENV` | `local` | Config profile: `local`, `docker`, `production` |
+| `POSTGRES_PORT` | `5434` | Host port for Postgres container |
+| `POSTGRES_USER` | `postgres` | Postgres username |
+| `POSTGRES_PASSWORD` | `secret` | Postgres password |
+| `POSTGRES_DB` | `golang_web_api` | Postgres database name |
+| `REDIS_PORT` | `6385` | Host port for Redis container |
+| `ELASTICSEARCH_PORT` | `9200` | Host port for Elasticsearch HTTP |
+| `ELASTICSEARCH_TRANSPORT_PORT` | `9300` | Host port for Elasticsearch transport |
+| `KIBANA_PORT` | `5601` | Host port for Kibana |
+| `PGADMIN_PORT` | `8589` | Host port for pgAdmin |
+| `PGADMIN_EMAIL` | `admin@main.com` | pgAdmin login email |
+| `PGADMIN_PASSWORD` | `secret` | pgAdmin login password |
+| `ELASTIC_PASSWORD` | — | Elasticsearch password |
+| `KIBANA_SYSTEM_PASSWORD` | — | Kibana system password |
+| `FILEBEAT_INTERNAL_PASSWORD` | — | Filebeat internal password |
 
-Config values (ports, DB credentials, JWT secrets, etc.) live in `config/config-{APP_ENV}.yml`.
+App config (JWT secrets, log level, etc.) lives in `config/config-{APP_ENV}.yml`.
 
 ## Artisan CLI
 

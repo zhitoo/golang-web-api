@@ -29,8 +29,8 @@ services:
       - ./docker/elk/elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro,Z
       - elasticsearch:/usr/share/elasticsearch/data:Z
     ports:
-      - 9200:9200
-      - 9300:9300
+      - "${ELASTICSEARCH_PORT:-9200}:9200"
+      - "${ELASTICSEARCH_TRANSPORT_PORT:-9300}:9300"
     environment:
       node.name: elasticsearch
       ES_JAVA_OPTS: -Xms512m -Xmx512m
@@ -49,7 +49,7 @@ services:
       - ./docker/elk/kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro,Z
       - elasticsearch:/usr/share/kibana/data:Z
     ports:
-      - 5601:5601
+      - "${KIBANA_PORT:-5601}:5601"
     environment:
       KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
     networks:
@@ -85,14 +85,14 @@ services:
     image: postgres:latest
     container_name: postgres_con
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: secret
-      POSTGRES_DB: golang_web_api
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secret}
+      POSTGRES_DB: ${POSTGRES_DB:-golang_web_api}
       PGDATA: /data/postgres
     volumes:
       - postgres:/data/postgres
     ports:
-      - "5434:5432"
+      - "${POSTGRES_PORT:-5434}:5432"
     networks:
       - app_net
     restart: unless-stopped
@@ -100,12 +100,12 @@ services:
     image: dpage/pgadmin4
     container_name: pgadmin_con
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@main.com
-      PGADMIN_DEFAULT_PASSWORD: secret
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@main.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-secret}
     volumes:
       - pgadmin:/var/lib/pgadmin
     ports:
-      - "8589:80"
+      - "${PGADMIN_PORT:-8589}:80"
     networks:
       - app_net
     restart: unless-stopped
@@ -120,7 +120,7 @@ services:
       - redis:/etc/redis.conf
       - redis:/data
     ports:
-      - "6385:6379"
+      - "${REDIS_PORT:-6385}:6379"
     networks:
       - app_net
     restart: unless-stopped
