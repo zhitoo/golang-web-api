@@ -24,34 +24,52 @@ func NewUserService(cfg *config.Config) *UserService {
 	}
 }
 
-func (s *UserService) Login(mobile, email, otpCode string) (*authSvc.AuthToken, error) {
+func (s *UserService) Login(mobile, email, otpCode, password string) (*authSvc.AuthToken, error) {
+	if otpCode == "" && password == "" {
+		return nil, fmt.Errorf("otp or password is required")
+	}
+
 	gorm := db.GetDb()
 	var u models.User
 
 	if mobile != "" {
-		if err := otpSvc.VerifyOTP(mobile, otpCode); err != nil {
-			return nil, err
-		}
-
-		if err := gorm.Where("mobile = ?", mobile).First(&u).Error; err != nil {
-			password, err := utils.HashPassword(utils.RandomString(16))
-			if err != nil {
+		if password != "" {
+			if err := gorm.Where("mobile = ?", mobile).First(&u).Error; err != nil {
+				return nil, fmt.Errorf("invalid credentials")
+			}
+			if !utils.VerifyPassword(password, u.Password) {
+				return nil, fmt.Errorf("invalid credentials")
+			}
+		} else {
+			if err := otpSvc.VerifyOTP(mobile, otpCode); err != nil {
 				return nil, err
 			}
-			u = models.User{Mobile: mobile, Password: password}
-			if err := gorm.Create(&u).Error; err != nil {
-				return nil, err
+			if err := gorm.Where("mobile = ?", mobile).First(&u).Error; err != nil {
+				pwd, err := utils.HashPassword(utils.RandomString(16))
+				if err != nil {
+					return nil, err
+				}
+				u = models.User{Mobile: mobile, Password: pwd}
+				if err := gorm.Create(&u).Error; err != nil {
+					return nil, err
+				}
 			}
 		}
 	} else {
 		if err := gorm.Where("email = ?", email).First(&u).Error; err != nil {
-			return nil, fmt.Errorf("user not found")
+			return nil, fmt.Errorf("invalid credentials")
 		}
-		if u.Mobile == "" {
-			return nil, fmt.Errorf("no mobile number linked to this account")
-		}
-		if err := otpSvc.VerifyOTP(u.Mobile, otpCode); err != nil {
-			return nil, err
+		if password != "" {
+			if !utils.VerifyPassword(password, u.Password) {
+				return nil, fmt.Errorf("invalid credentials")
+			}
+		} else {
+			if u.Mobile == "" {
+				return nil, fmt.Errorf("no mobile number linked to this account")
+			}
+			if err := otpSvc.VerifyOTP(u.Mobile, otpCode); err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -96,6 +114,53 @@ func (s *UserService) RefreshToken(refreshToken string) (*authSvc.AuthToken, err
 		Username: username,
 		Roles:    roles,
 	})
+}
+
+func (s *UserService) ChangePassword(userId int, oldPassword, newPassword string) error {
+	gorm := db.GetDb()
+	var u models.User
+	if err := gorm.First(&u, userId).Error; err != nil {
+		return fmt.Errorf("user not found")
+	}
+	if !utils.VerifyPassword(oldPassword, u.Password) {
+		return fmt.Errorf("incorrect current password")
+	}
+	hash, err := utils.HashPassword(newPassword)
+	if err != nil {
+		return err
+	}
+	return gorm.Model(&u).Update("password", hash).Error
+}
+
+func (s *UserService) ResetPassword(mobile, email, otpCode, newPassword string) error {
+	gorm := db.GetDb()
+	var u models.User
+
+	var mobileToVerify string
+	if mobile != "" {
+		if err := gorm.Where("mobile = ?", mobile).First(&u).Error; err != nil {
+			return fmt.Errorf("user not found")
+		}
+		mobileToVerify = mobile
+	} else {
+		if err := gorm.Where("email = ?", email).First(&u).Error; err != nil {
+			return fmt.Errorf("user not found")
+		}
+		if u.Mobile == "" {
+			return fmt.Errorf("no mobile number linked to this account")
+		}
+		mobileToVerify = u.Mobile
+	}
+
+	if err := otpSvc.VerifyOTP(mobileToVerify, otpCode); err != nil {
+		return err
+	}
+
+	hash, err := utils.HashPassword(newPassword)
+	if err != nil {
+		return err
+	}
+	return gorm.Model(&u).Update("password", hash).Error
 }
 
 func (s *UserService) GetById(id int) (*models.User, error) {

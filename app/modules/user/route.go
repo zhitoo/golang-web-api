@@ -20,9 +20,11 @@ func Routes(r *gin.RouterGroup) {
 
 	r.POST("/login", loginHandler(svc))
 	r.POST("/refresh-token", refreshTokenHandler(svc))
+	r.POST("/reset-password", resetPasswordHandler(svc))
 
 	authenticated := r.Group("", middlewares.Authentication(cfg))
 	{
 		authenticated.GET("/me", meHandler(svc))
+		authenticated.POST("/change-password", changePasswordHandler(svc))
 	}
 }

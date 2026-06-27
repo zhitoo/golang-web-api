@@ -27,7 +27,7 @@ func loginHandler(svc *UserService) gin.HandlerFunc {
 			return
 		}
 
-		token, err := svc.Login(req.Mobile, req.Email, req.OTP)
+		token, err := svc.Login(req.Mobile, req.Email, req.OTP, req.Password)
 		if err != nil {
 			log.Warn("login failed", map[logging.ExtraKey]any{logging.ErrorMessage: err.Error()})
 			response.NewResponse().SetError(err).SetHttpStatusCode(http.StatusUnauthorized).Json(c)
@@ -54,6 +54,45 @@ func refreshTokenHandler(svc *UserService) gin.HandlerFunc {
 		}
 
 		response.NewResponse().SetResult(token).Json(c)
+	}
+}
+
+func changePasswordHandler(svc *UserService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		req := new(ChangePasswordRequest)
+		if err := c.ShouldBindJSON(req); err != nil {
+			response.NewResponse().SetError(err).SetHttpStatusCode(http.StatusUnprocessableEntity).Json(c)
+			return
+		}
+
+		userIdVal, _ := c.Get("UserId")
+		userId, _ := strconv.Atoi(userIdVal.(string))
+
+		if err := svc.ChangePassword(userId, req.OldPassword, req.NewPassword); err != nil {
+			log.Warn("change password failed", map[logging.ExtraKey]any{logging.ErrorMessage: err.Error()})
+			response.NewResponse().SetError(err).SetHttpStatusCode(http.StatusBadRequest).Json(c)
+			return
+		}
+
+		response.NewResponse().SetResult("password changed successfully").Json(c)
+	}
+}
+
+func resetPasswordHandler(svc *UserService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		req := new(ResetPasswordRequest)
+		if err := c.ShouldBindJSON(req); err != nil {
+			response.NewResponse().SetError(err).SetHttpStatusCode(http.StatusUnprocessableEntity).Json(c)
+			return
+		}
+
+		if err := svc.ResetPassword(req.Mobile, req.Email, req.OTP, req.Password); err != nil {
+			log.Warn("reset password failed", map[logging.ExtraKey]any{logging.ErrorMessage: err.Error()})
+			response.NewResponse().SetError(err).SetHttpStatusCode(http.StatusBadRequest).Json(c)
+			return
+		}
+
+		response.NewResponse().SetResult("password reset successfully").Json(c)
 	}
 }
 

@@ -12,7 +12,10 @@ var fa = map[string]map[string]string{
 	},
 
 	"feild": {
-		"name":   "نام",
-		"mobile": "شماره موبایل",
+		"name":     "نام",
+		"mobile":   "شماره موبایل",
+		"password": "رمز عبور",
+		"otp":      "کد یکبار مصرف",
+		"email":    "ایمیل",
 	},
 }
