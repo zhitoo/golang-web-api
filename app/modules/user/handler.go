@@ -18,6 +18,16 @@ type userResponse struct {
 	Email     string `json:"email"`
 }
 
+// @Summary      Login
+// @Description  login with mobile or email using OTP or password; mobile+OTP auto-creates the user if not found
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        body  body      LoginRequest  true  "Login credentials"
+// @Success      200   {object}  response.BaseHttpResponse
+// @Failure      422   {object}  response.BaseHttpResponse
+// @Failure      401   {object}  response.BaseHttpResponse
+// @Router       /v1/users/login [post]
 func loginHandler(svc *UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		req := new(LoginRequest)
@@ -38,6 +48,16 @@ func loginHandler(svc *UserService) gin.HandlerFunc {
 	}
 }
 
+// @Summary      Refresh Token
+// @Description  issue a new access/refresh token pair using a valid refresh token
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        body  body      RefreshTokenRequest  true  "Refresh token"
+// @Success      200   {object}  response.BaseHttpResponse
+// @Failure      422   {object}  response.BaseHttpResponse
+// @Failure      401   {object}  response.BaseHttpResponse
+// @Router       /v1/users/refresh-token [post]
 func refreshTokenHandler(svc *UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		req := new(RefreshTokenRequest)
@@ -57,6 +77,17 @@ func refreshTokenHandler(svc *UserService) gin.HandlerFunc {
 	}
 }
 
+// @Summary      Change Password
+// @Description  change password for the authenticated user
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        body  body      ChangePasswordRequest  true  "Old and new password"
+// @Success      200   {object}  response.BaseHttpResponse
+// @Failure      422   {object}  response.BaseHttpResponse
+// @Failure      400   {object}  response.BaseHttpResponse
+// @Router       /v1/users/change-password [post]
 func changePasswordHandler(svc *UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		req := new(ChangePasswordRequest)
@@ -78,6 +109,16 @@ func changePasswordHandler(svc *UserService) gin.HandlerFunc {
 	}
 }
 
+// @Summary      Reset Password
+// @Description  reset password using OTP sent to the mobile linked to the account
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        body  body      ResetPasswordRequest  true  "Mobile/email, OTP and new password"
+// @Success      200   {object}  response.BaseHttpResponse
+// @Failure      422   {object}  response.BaseHttpResponse
+// @Failure      400   {object}  response.BaseHttpResponse
+// @Router       /v1/users/reset-password [post]
 func resetPasswordHandler(svc *UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		req := new(ResetPasswordRequest)
@@ -96,6 +137,15 @@ func resetPasswordHandler(svc *UserService) gin.HandlerFunc {
 	}
 }
 
+// @Summary      Get Current User
+// @Description  get the authenticated user's profile
+// @Tags         users
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200   {object}  response.BaseHttpResponse
+// @Failure      401   {object}  response.BaseHttpResponse
+// @Failure      404   {object}  response.BaseHttpResponse
+// @Router       /v1/users/me [get]
 func meHandler(svc *UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userIdVal, exists := c.Get("UserId")

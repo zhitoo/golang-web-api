@@ -27,7 +27,9 @@ go build -o artisan artisan.go
 
 ### Generate Swagger docs
 ```bash
-swag init -g cmd/main.go
+$(go env GOPATH)/bin/swag init -g cmd/main.go
+# or via artisan (after go build -o artisan artisan.go):
+./artisan swagger:generate
 ```
 
 ### Run tests
@@ -56,6 +58,8 @@ Copy `.env.sample` to `.env` and fill in values. Config is then loaded from `con
 ### Config system
 `config.GetConfig()` reads `.env` (via godotenv), then picks `config/config-{APP_ENV}.yml`, and unmarshals into a typed `Config` struct via Viper. Set `APP_ENV=production` in `.env` or the shell to switch environments.
 
+JWT durations (`AccessTokenExpireDuration`, `RefreshTokenExpireDuration`) are stored as plain integers in the YAML and treated as seconds (multiplied by `time.Second` in `auth/service.go`).
+
 ### Module structure
 Each feature lives under `app/modules/<name>/`. The typical files are:
 - `route.go` — registers Gin routes on a `*gin.RouterGroup`
@@ -64,7 +68,7 @@ Each feature lives under `app/modules/<name>/`. The typical files are:
 - `request.go` — request structs with `binding:` validator tags
 - `models/` — GORM model structs
 
-Not all modules carry all files: `auth` is service-only (JWT generation/verification, used by the `user` module); `health` adds a middleware but has no handler file; `location` has only models and a route stub.
+Not all modules carry all files: `auth` is service-only (JWT generation/verification, used by the `user` module); `health` adds a middleware but has no handler file; `location` has only models and a route stub with no endpoints registered yet.
 
 All modules are wired into `app/server.go → RegisterRoutes()`.
 
@@ -83,7 +87,17 @@ Pass the scoped logger's category/subcategory pair that best describes the modul
 ### OTP-based auth flow
 1. `POST /api/v1/otp/send` — generates a 6-digit OTP, stores it in Redis under `otp:<mobile>` for 2 minutes.
 2. `POST /api/v1/otp/verify` — checks OTP and deletes it from Redis on success.
-3. `POST /api/v1/users/login` — re-verifies OTP, then finds or auto-creates the user in Postgres, returning an auth token.
+3. `POST /api/v1/users/login` — supports four login modes:
+   - mobile + OTP: verifies OTP, auto-creates user if not found
+   - mobile + password: password auth only, user must exist
+   - email + password: password auth only, user must exist
+   - email + OTP: verifies OTP against the mobile linked to the email account
+
+### Authentication middleware
+`app/middlewares/auth_middleware.go → Authentication(cfg)` validates the `Bearer` token and injects these keys into the Gin context for downstream handlers:
+- `"UserId"` (string)
+- `"Username"` (string)
+- `"Roles"` ([]string)
 
 ### HTTP response pattern
 Always use the builder in `app/response`:
@@ -91,11 +105,14 @@ Always use the builder in `app/response`:
 response.NewResponse().SetResult(data).Json(c)
 response.NewResponse().SetStatus(false).SetError(err).SetHttpStatusCode(http.StatusBadRequest).Json(c)
 ```
+`SetError` automatically sets `success: false`, populates `validation_errors` if the error is a `validator.ValidationErrors`, and defaults the HTTP status to 400 if it is still 200.
 
 ### Database
 - **GORM** with Postgres driver (`database/db/postgres.go`)
 - **Migrations** are raw SQL files under `database/migrations/` managed by `golang-migrate`
 - `BaseModel` (`app/modules/user/models/base_model.go`) provides `CreatedAt/By`, `ModifiedAt/By`, `DeletedAt/By` via GORM hooks; it reads `UserId` from the Gin context
+
+> **Known typo:** The timestamp fields (`CreatedAt`, `ModifiedAt`, `DeletedAt`) use the tag prefix `gotm:` instead of `gorm:`, so their timezone struct tags are silently ignored by GORM. Do not "fix" this without updating the migration SQL as well.
 
 ### Cache (Redis)
 `database/cache/redis.go` exposes generic helpers:
@@ -131,5 +148,6 @@ Logs are written to a file (path from config) and shipped to Elasticsearch via F
 Custom validators are registered in `app/server.go → RegisterValidators()`.  
 `app/validations/` holds the validator functions (e.g. `irmobile` for Iranian mobile numbers) and `GetValidationErrors()` which maps `validator.ValidationErrors` to a translated `[]ValidationError` slice used by the response builder.
 
-### Swagger
-Swagger annotations live on handler functions. Run `swag init` after changing them to regenerate `docs/`.
+### API documentation
+- **Swagger** — annotations live on handler functions; run `swag init -g cmd/main.go` after changing them to regenerate `docs/`.
+- **Bruno collection** — `docs/apiDocs/` contains a Bruno API collection with folders for Health, OTP, and Users. Use Bruno to manually test endpoints against the local environment (`docs/apiDocs/environments/`).

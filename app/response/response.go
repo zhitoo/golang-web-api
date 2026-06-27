@@ -7,7 +7,7 @@ import (
 	"github.com/zhitoo/golang-web-api/app/validations"
 )
 
-type baseHttpResponse struct {
+type BaseHttpResponse struct {
 	Result           any                            `json:"result"`
 	Success          bool                           `json:"success"`
 	HttpStatusCode   int                            `json:"-"`
@@ -15,8 +15,8 @@ type baseHttpResponse struct {
 	Error            any                            `json:"error,omitempty"`
 }
 
-func NewResponse() *baseHttpResponse {
-	res := new(baseHttpResponse)
+func NewResponse() *BaseHttpResponse {
+	res := new(BaseHttpResponse)
 	res.Success = true
 	res.HttpStatusCode = 200
 	res.Error = nil
@@ -24,25 +24,25 @@ func NewResponse() *baseHttpResponse {
 	return res
 }
 
-func (bh *baseHttpResponse) SetResult(result any) *baseHttpResponse {
+func (bh *BaseHttpResponse) SetResult(result any) *BaseHttpResponse {
 	bh.Result = result
 
 	return bh
 }
 
-func (bh *baseHttpResponse) SetStatus(success bool) *baseHttpResponse {
+func (bh *BaseHttpResponse) SetStatus(success bool) *BaseHttpResponse {
 	bh.Success = success
 
 	return bh
 }
 
-func (bh *baseHttpResponse) SetHttpStatusCode(httpStatusCode int) *baseHttpResponse {
+func (bh *BaseHttpResponse) SetHttpStatusCode(httpStatusCode int) *BaseHttpResponse {
 	bh.HttpStatusCode = httpStatusCode
 
 	return bh
 }
 
-func (bh *baseHttpResponse) SetError(err error) *baseHttpResponse {
+func (bh *BaseHttpResponse) SetError(err error) *BaseHttpResponse {
 	bh.Error = err.Error()
 
 	bh.ValidationErrors = validations.GetValidationErrors(err)
@@ -58,7 +58,7 @@ func (bh *baseHttpResponse) SetError(err error) *baseHttpResponse {
 	return bh
 }
 
-func (bh *baseHttpResponse) Json(c *gin.Context) {
+func (bh *BaseHttpResponse) Json(c *gin.Context) {
 	if bh.Error != nil {
 		c.AbortWithStatusJSON(bh.HttpStatusCode, bh)
 		return

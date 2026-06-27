@@ -1,30 +1,76 @@
+basePath: /api
 definitions:
-  handlers.user:
+  otp.SendOTPRequest:
     properties:
-      id:
-        minimum: 1
-        type: integer
       mobile:
         type: string
-      name:
-        minLength: 3
+    required:
+    - mobile
+    type: object
+  otp.VerifyOTPRequest:
+    properties:
+      mobile:
+        type: string
+      otp:
         type: string
     required:
-    - id
-    - name
+    - mobile
+    - otp
     type: object
-  helper.BaseHttpResponse:
+  response.BaseHttpResponse:
     properties:
       error: {}
       result: {}
-      result_code:
-        type: integer
       success:
         type: boolean
       validation_errors:
         items:
           $ref: '#/definitions/validations.ValidationError'
         type: array
+    type: object
+  user.ChangePasswordRequest:
+    properties:
+      new_password:
+        minLength: 8
+        type: string
+      old_password:
+        type: string
+    required:
+    - new_password
+    - old_password
+    type: object
+  user.LoginRequest:
+    properties:
+      email:
+        type: string
+      mobile:
+        type: string
+      otp:
+        type: string
+      password:
+        type: string
+    type: object
+  user.RefreshTokenRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  user.ResetPasswordRequest:
+    properties:
+      email:
+        type: string
+      mobile:
+        type: string
+      otp:
+        type: string
+      password:
+        minLength: 8
+        type: string
+    required:
+    - otp
+    - password
     type: object
   validations.ValidationError:
     properties:
@@ -39,50 +85,235 @@ definitions:
     type: object
 info:
   contact: {}
+  description: REST API with OTP-based authentication
+  title: Web API
+  version: "1.0"
 paths:
-  /v1/health/:
+  /v1/health:
     get:
-      consumes:
-      - application/json
-      description: Health Check
+      description: returns ok if the service is healthy
       produces:
       - application/json
       responses:
         "200":
-          description: Success
+          description: OK
           schema:
-            $ref: '#/definitions/helper.BaseHttpResponse'
-        "400":
-          description: Failed
-          schema:
-            $ref: '#/definitions/helper.BaseHttpResponse'
+            $ref: '#/definitions/response.BaseHttpResponse'
       summary: Health Check
       tags:
       - health
-  /v1/test/body-binder:
+  /v1/otp/send:
     post:
       consumes:
       - application/json
-      description: BodyBinder
+      description: sends a 6-digit OTP to the given mobile number (stored in Redis
+        for 2 minutes); in local env the OTP is returned in the response
       parameters:
-      - description: user data
+      - description: Mobile number
         in: body
-        name: user
+        name: body
         required: true
         schema:
-          $ref: '#/definitions/handlers.user'
+          $ref: '#/definitions/otp.SendOTPRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: Success
+          description: OK
           schema:
-            $ref: '#/definitions/helper.BaseHttpResponse'
+            $ref: '#/definitions/response.BaseHttpResponse'
         "400":
-          description: Failed
+          description: Bad Request
           schema:
-            $ref: '#/definitions/helper.BaseHttpResponse'
-      summary: BodyBinder
+            $ref: '#/definitions/response.BaseHttpResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/response.BaseHttpResponse'
+      summary: Send OTP
       tags:
-      - test
+      - otp
+  /v1/otp/verify:
+    post:
+      consumes:
+      - application/json
+      description: verifies the OTP sent to the given mobile number and deletes it
+        from Redis on success
+      parameters:
+      - description: Mobile number and OTP
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/otp.VerifyOTPRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BaseHttpResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.BaseHttpResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/response.BaseHttpResponse'
+      summary: Verify OTP
+      tags:
+      - otp
+  /v1/users/change-password:
+    post:
+      consumes:
+      - application/json
+      description: change password for the authenticated user
+      parameters:
+      - description: Old and new password
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/user.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BaseHttpResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.BaseHttpResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/response.BaseHttpResponse'
+      security:
+      - BearerAuth: []
+      summary: Change Password
+      tags:
+      - users
+  /v1/users/login:
+    post:
+      consumes:
+      - application/json
+      description: login with mobile or email using OTP or password; mobile+OTP auto-creates
+        the user if not found
+      parameters:
+      - description: Login credentials
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/user.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BaseHttpResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.BaseHttpResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/response.BaseHttpResponse'
+      summary: Login
+      tags:
+      - users
+  /v1/users/me:
+    get:
+      description: get the authenticated user's profile
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BaseHttpResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.BaseHttpResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.BaseHttpResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Current User
+      tags:
+      - users
+  /v1/users/refresh-token:
+    post:
+      consumes:
+      - application/json
+      description: issue a new access/refresh token pair using a valid refresh token
+      parameters:
+      - description: Refresh token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/user.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BaseHttpResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.BaseHttpResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/response.BaseHttpResponse'
+      summary: Refresh Token
+      tags:
+      - users
+  /v1/users/reset-password:
+    post:
+      consumes:
+      - application/json
+      description: reset password using OTP sent to the mobile linked to the account
+      parameters:
+      - description: Mobile/email, OTP and new password
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/user.ResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BaseHttpResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.BaseHttpResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/response.BaseHttpResponse'
+      summary: Reset Password
+      tags:
+      - users
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer {token}"
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

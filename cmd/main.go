@@ -8,6 +8,14 @@ import (
 	"github.com/zhitoo/golang-web-api/pkg/logging"
 )
 
+// @title           Web API
+// @version         1.0
+// @description     REST API with OTP-based authentication
+// @BasePath        /api
+// @securityDefinitions.apikey BearerAuth
+// @in              header
+// @name            Authorization
+// @description     Type "Bearer {token}"
 func main() {
 	cfg := config.GetConfig()
 

@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"os/exec"
 	"strconv"
 
 	"github.com/zhitoo/golang-web-api/app"
@@ -11,7 +12,27 @@ import (
 	"github.com/zhitoo/golang-web-api/database/migrations"
 )
 
+func run(name string, args ...string) {
+	cmd := exec.Command(name, args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		log.Fatalf("%s failed: %v", name, err)
+	}
+}
+
 func main() {
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "swagger:generate":
+			run("swag", "init", "-g", "cmd/main.go")
+			return
+		case "serve:dev":
+			run("air")
+			return
+		}
+	}
+
 	cfg := config.GetConfig()
 
 	err := db.InitDb(cfg)

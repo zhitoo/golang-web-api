@@ -19,6 +19,16 @@ func init() {
 	}
 }
 
+// @Summary      Send OTP
+// @Description  sends a 6-digit OTP to the given mobile number (stored in Redis for 2 minutes); in local env the OTP is returned in the response
+// @Tags         otp
+// @Accept       json
+// @Produce      json
+// @Param        body  body      SendOTPRequest  true  "Mobile number"
+// @Success      200   {object}  response.BaseHttpResponse
+// @Failure      422   {object}  response.BaseHttpResponse
+// @Failure      400   {object}  response.BaseHttpResponse
+// @Router       /v1/otp/send [post]
 func sendOTPHandler(c *gin.Context) {
 	request := new(SendOTPRequest)
 
@@ -48,6 +58,16 @@ func sendOTPHandler(c *gin.Context) {
 	response.NewResponse().SetResult(result).Json(c)
 }
 
+// @Summary      Verify OTP
+// @Description  verifies the OTP sent to the given mobile number and deletes it from Redis on success
+// @Tags         otp
+// @Accept       json
+// @Produce      json
+// @Param        body  body      VerifyOTPRequest  true  "Mobile number and OTP"
+// @Success      200   {object}  response.BaseHttpResponse
+// @Failure      422   {object}  response.BaseHttpResponse
+// @Failure      401   {object}  response.BaseHttpResponse
+// @Router       /v1/otp/verify [post]
 func verifyOTPHandler(c *gin.Context) {
 	request := new(VerifyOTPRequest)
 	if err := c.ShouldBindJSON(request); err != nil {
