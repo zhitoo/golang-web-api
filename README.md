@@ -11,20 +11,35 @@ A REST API built with Go, Gin, GORM, and OTP-based authentication.
 
 ## Setup
 
+### Local (Go installed on machine)
+
 ```bash
 cp .env.sample .env
-# fill in values in .env
 
-docker-compose up -d   # start Postgres, Redis, ELK
-make migrate-up        # build artisan + run migrations
-make serve             # build artisan + start server
+docker-compose up -d postgres redis   # start only DB + cache
+make migrate-up                       # run migrations
+make serve                            # start server
 ```
+
+For hot reload: `make serve-dev` (requires `air`)
+
+### Fully Dockerized (no Go needed locally)
+
+```bash
+cp .env.sample .env
+
+docker-compose up -d postgres redis   # start DB + cache first
+make docker-dev                       # build image + start app with hot reload
+```
+
+On first run, Docker downloads the Go image and installs dependencies — subsequent starts are fast. Code changes trigger automatic reload inside the container.
 
 ### Environment variables (`.env`)
 
 | Variable | Default | Description |
 |---|---|---|
 | `APP_ENV` | `local` | Config profile: `local`, `docker`, `production` |
+| `APP_PORT` | `5050` | Host port exposed by the app container |
 | `POSTGRES_PORT` | `5434` | Host port for Postgres container |
 | `POSTGRES_USER` | `postgres` | Postgres username |
 | `POSTGRES_PASSWORD` | `secret` | Postgres password |

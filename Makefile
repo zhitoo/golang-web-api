@@ -4,7 +4,7 @@ else
     BIN := artisan
 endif
 
-.PHONY: build serve serve-dev swagger migrate-up migrate-down
+.PHONY: build serve serve-dev swagger migrate-up migrate-down docker-dev
 
 build:
 	go build -o $(BIN) artisan.go
@@ -23,3 +23,6 @@ migrate-up: build
 
 migrate-down: build
 	./$(BIN) migrate:down 1
+
+docker-dev:
+	docker compose up --build app

@@ -1,4 +1,23 @@
 services:
+ ####################### App #######################
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - .:/app
+      - go_modules:/go/pkg/mod
+    ports:
+      - "${APP_PORT:-5050}:5050"
+    environment:
+      APP_ENV: docker
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - app_net
+    restart: unless-stopped
+
  ####################### ELK #######################
   setup:
     build:
@@ -143,6 +162,7 @@ volumes:
   setup:
   elasticsearch:
   prometheus_data:
+  go_modules:
 networks:
   app_net:
     driver: bridge

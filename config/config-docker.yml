@@ -1,3 +1,7 @@
+App:
+  Env: "local"
+  Name: "Test"
+  Lang: "fa"
 Server:
   Port: 5050
   RunMode: debug
@@ -5,6 +9,7 @@ Logger:
   FileName: ../logs/app.log
   Encoding: json
   Level: debug
+  Logger: zerolog
 Cors:
   AllowOrigins: "*"
 Postgres:
@@ -12,7 +17,7 @@ Postgres:
   Port: 5432
   User: postgres
   Password: secret
-  DB: carsale
+  DB: golang_web_api
   SslMode: disable
   TimeZone: Asia/Tehran
 Redis:
@@ -27,3 +32,8 @@ Redis:
   PoolTimeout: 15
   IdleCheckFrequency: 500
   IdleTimeout: 500
+JWT:
+  Secret: "secret"
+  RefreshSecret: "refresh_secret"
+  AccessTokenExpireDuration: 3600
+  RefreshTokenExpireDuration: 36000
