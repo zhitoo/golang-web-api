@@ -13,9 +13,10 @@ import (
 )
 
 type AppConfig struct {
-	Env  string
-	Name string
-	Lang string
+	Env    string
+	Name   string
+	Lang   string
+	Broker string
 }
 type ServerConfig struct {
 	Port    string
@@ -64,10 +65,15 @@ type JWTConfig struct {
 	RefreshTokenExpireDuration time.Duration
 }
 
+type JetStreamConfig struct {
+	Enabled bool
+}
+
 type NatsConfig struct {
-	Host     string
-	Port     string
-	Password string
+	Host       string
+	Port       string
+	Password   string
+	JetStream  JetStreamConfig
 }
 
 type Config struct {

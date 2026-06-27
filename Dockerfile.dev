@@ -1,5 +1,9 @@
 FROM golang:latest
 
+ENV GOPROXY=https://goproxy.cn,https://proxy.golang.org,direct
+ENV GONOSUMCHECK=*
+ENV GONOSUMDB=*
+
 WORKDIR /app
 
 RUN go install github.com/air-verse/air@latest

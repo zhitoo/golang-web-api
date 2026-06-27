@@ -2,6 +2,7 @@ App:
   Env: "local"
   Name: "Test"
   Lang: "fa"
+  Broker: "nats"
 Server:
   Port: 5050
   RunMode: debug
@@ -41,3 +42,5 @@ Nats:
   Host: nats_con
   Port: 4222
   Password: secret
+  JetStream:
+    Enabled: true

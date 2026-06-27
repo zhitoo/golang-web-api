@@ -6,6 +6,7 @@ import (
 	"github.com/zhitoo/golang-web-api/config"
 	"github.com/zhitoo/golang-web-api/database/cache"
 	"github.com/zhitoo/golang-web-api/database/db"
+	"github.com/zhitoo/golang-web-api/pkg/job"
 	"github.com/zhitoo/golang-web-api/pkg/logging"
 )
 
@@ -31,11 +32,18 @@ func main() {
 		logger.With(logging.Redis, logging.Startup).Fatal(err.Error(), nil)
 	}
 
-	err = broker.InitNats(cfg)
-	defer broker.CloseNats()
+	broker, err := broker.NewBroker(cfg)
 	if err != nil {
 		logger.With(logging.General, logging.Startup).Fatal(err.Error(), nil)
 	}
+	defer broker.Close()
+
+	err = broker.Connect()
+	if err != nil {
+		logger.With(logging.General, logging.Startup).Fatal(err.Error(), nil)
+	}
+
+	_ = job.NewDispatcher(broker)
 
 	err = db.InitDb(cfg)
 	defer db.CloseDb()

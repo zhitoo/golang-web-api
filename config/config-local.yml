@@ -2,11 +2,12 @@ App:
   Env: "local"
   Name: "Test"
   Lang: "fa"
+  Broker: "nats"
 Server:
   Port: 5050
   RunMode: debug
 Logger:
-  FileName: app.log
+  FileName: ../logs/app.log
   Encoding: json
   Level: debug
   Logger: zerolog
@@ -41,3 +42,5 @@ Nats:
   Host: localhost
   Port: 4222
   Password: secret
+  JetStream:
+    Enabled: true
