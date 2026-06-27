@@ -6,17 +6,13 @@ info:
 http:
   method: post
   url: "{{baseUrl}}otp/verify"
-  headers:
-    - name: UserId
-      value: "1"
-    - name: Browser
-      value: bruno
   body:
-    type: multipart-form
-    data:
-      - name: file
-        type: text
-        value: ""
+    type: json
+    data: |-
+      {
+        "mobile":"09227121074",
+        "otp":"123456"
+      }
 
 settings:
   encodeUrl: true
