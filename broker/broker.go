@@ -4,6 +4,7 @@ type Broker interface {
 	Connect() error
 	Publish(subject string, data []byte) error
 	Subscribe(subject string, handler func(msg []byte)) error
+	QueueSubscribe(subject string, queue string, handler func(msg []byte)) error
 	Close()
 }
 

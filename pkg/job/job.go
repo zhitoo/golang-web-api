@@ -29,6 +29,7 @@ type Job struct {
 type Broker interface {
 	Publish(subject string, data []byte) error
 	Subscribe(subject string, handler func(msg []byte)) error
+	QueueSubscribe(subject string, queue string, handler func(msg []byte)) error
 }
 
 type DurableBroker interface {
@@ -82,16 +83,16 @@ func (d *Dispatcher) EnsureStream(name string, subjects []string) error {
 	return d.durable.CreateStream(name, subjects)
 }
 
-type Handler func(job Job) error
+type MessageHandler func(job Job) error
 
 type Consumer struct {
 	broker     Broker
 	durable    DurableBroker
 	useDurable bool
-	handler    Handler
+	handler    MessageHandler
 }
 
-func NewConsumer(broker Broker, handler Handler) *Consumer {
+func NewConsumer(broker Broker, handler MessageHandler) *Consumer {
 	c := &Consumer{broker: broker, handler: handler}
 	if db, ok := broker.(DurableBroker); ok {
 		c.durable = db
@@ -102,6 +103,10 @@ func NewConsumer(broker Broker, handler Handler) *Consumer {
 
 func (c *Consumer) Consume(subject string) error {
 	return c.broker.Subscribe(subject, c.processMessage)
+}
+
+func (c *Consumer) ConsumeQueue(subject string, queue string) error {
+	return c.broker.QueueSubscribe(subject, queue, c.processMessage)
 }
 
 func (c *Consumer) ConsumeDurable(subject string, durable string) error {

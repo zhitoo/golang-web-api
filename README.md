@@ -109,3 +109,13 @@ make swagger
 4. `POST /api/v1/users/refresh-token` — get a new token pair
 
 Protected endpoints require `Authorization: Bearer <access_token>`.
+
+## Broker & Job System
+
+See [docs/broker-and-jobs.md](docs/broker-and-jobs.md) for documentation on:
+
+- NATS broker and pub/sub
+- Job queue system (Laravel-style)
+- QueueSubscribe for load balancing
+- Durable jobs with JetStream
+- Complete examples and scenarios

@@ -6,13 +6,19 @@ import (
 	"time"
 
 	"github.com/zhitoo/golang-web-api/database/cache"
+	"github.com/zhitoo/golang-web-api/pkg/job"
 	"github.com/zhitoo/golang-web-api/pkg/logging"
 )
 
 func SendOTP(mobile string) (string, error) {
 	otp := fmt.Sprintf("%06d", rand.Intn(1000000))
 
-	// send otp via sms
+	if err := job.Dispatch(&SendSmsJob{
+		Mobile: mobile,
+		Body:   fmt.Sprintf("Your OTP code is: %s", otp),
+	}); err != nil {
+		log.Error("failed to dispatch SMS job", map[logging.ExtraKey]any{logging.ErrorMessage: err.Error()})
+	}
 
 	if err := cache.SetValue("otp:"+mobile, otp, 2*time.Minute); err != nil {
 		log.Error("failed to cache OTP", map[logging.ExtraKey]any{logging.ErrorMessage: err.Error()})

@@ -51,6 +51,13 @@ func (b *NatsBroker) Subscribe(subject string, handler func(msg []byte)) error {
 	return err
 }
 
+func (b *NatsBroker) QueueSubscribe(subject string, queue string, handler func(msg []byte)) error {
+	_, err := b.conn.QueueSubscribe(subject, queue, func(m *nats.Msg) {
+		handler(m.Data)
+	})
+	return err
+}
+
 func (b *NatsBroker) PublishDurable(subject string, data []byte) error {
 	if b.js == nil {
 		return fmt.Errorf("jetstream not enabled")

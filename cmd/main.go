@@ -43,7 +43,13 @@ func main() {
 		logger.With(logging.General, logging.Startup).Fatal(err.Error(), nil)
 	}
 
-	_ = job.NewDispatcher(broker)
+	d := job.NewDispatcher(broker)
+	job.SetDispatcher(d)
+
+	smsWorker := job.NewWorker(broker, "sms")
+	if err := smsWorker.Start(); err != nil {
+		logger.With(logging.General, logging.Startup).Error("failed to start sms worker", map[logging.ExtraKey]any{logging.ErrorMessage: err.Error()})
+	}
 
 	err = db.InitDb(cfg)
 	defer db.CloseDb()
