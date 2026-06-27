@@ -1,7 +1,7 @@
 ARG ELASTIC_VERSION
 
 # https://www.docker.elastic.co/
-FROM mirror2.chabokan.net/elasticsearch:${ELASTIC_VERSION}
+FROM elasticsearch:${ELASTIC_VERSION}
 
 USER root
 

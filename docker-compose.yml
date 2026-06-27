@@ -82,22 +82,22 @@ services:
     depends_on:
       - elasticsearch
   postgres:
-    image: mirror2.chabokan.net/postgres:latest
+    image: postgres:latest
     container_name: postgres_con
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: secret
-      POSTGRES_DB: carsale
+      POSTGRES_DB: golang_web_api
       PGDATA: /data/postgres
     volumes:
       - postgres:/data/postgres
     ports:
-      - "5432:5432"
+      - "5434:5432"
     networks:
       - app_net
     restart: unless-stopped
   pgadmin:
-    image: mirror2.chabokan.net/dpage/pgadmin4
+    image: dpage/pgadmin4
     container_name: pgadmin_con
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@main.com
@@ -105,14 +105,14 @@ services:
     volumes:
       - pgadmin:/var/lib/pgadmin
     ports:
-      - "8585:80"
+      - "8589:80"
     networks:
       - app_net
     restart: unless-stopped
     depends_on:
       - postgres
   redis: 
-    image: mirror2.chabokan.net/redis:latest
+    image: redis:latest
     container_name: redis_con
     command: ["redis-server", "/etc/redis/redis.conf"]
     volumes:
