@@ -6,6 +6,8 @@ A REST API built with Go, Gin, GORM, and OTP-based authentication.
 
 - Go 1.26+
 - Docker & Docker Compose
+- [air](https://github.com/air-verse/air) — optional, for hot reload
+- [Bruno](https://www.usebruno.com) — optional, for API testing
 
 ## Setup
 
@@ -13,33 +15,44 @@ A REST API built with Go, Gin, GORM, and OTP-based authentication.
 cp .env.sample .env
 # fill in values in .env
 
-docker-compose up -d        # start Postgres, Redis, ELK
-./artisan migrate:up        # run migrations
-go run cmd/main.go          # start the server
+docker-compose up -d   # start Postgres, Redis, ELK
+make migrate-up        # build artisan + run migrations
+make serve             # build artisan + start server
 ```
 
-For hot reload during development:
-```bash
-air
-```
+### Environment variables (`.env`)
+
+| Variable | Description |
+|---|---|
+| `APP_ENV` | Config profile to load: `local` (default), `docker`, `production` |
+| `ELASTIC_PASSWORD` | Elasticsearch password |
+| `KIBANA_SYSTEM_PASSWORD` | Kibana system password |
+| `FILEBEAT_INTERNAL_PASSWORD` | Filebeat internal password |
+
+Config values (ports, DB credentials, JWT secrets, etc.) live in `config/config-{APP_ENV}.yml`.
 
 ## Artisan CLI
 
-Build once, then use `./artisan <command>`:
+All `make` targets build artisan automatically for the current OS (`artisan` on Linux/macOS, `artisan.exe` on Windows):
+
+| Make target | Equivalent artisan command | Description |
+|---|---|---|
+| `make build` | — | Build the artisan binary |
+| `make serve` | `./artisan serve` | Start the HTTP server |
+| `make serve-dev` | `./artisan serve:dev` | Start with hot reload (requires `air`) |
+| `make swagger` | `./artisan swagger:generate` | Regenerate Swagger docs |
+| `make migrate-up` | `./artisan migrate:up` | Run all pending migrations |
+| `make migrate-down` | `./artisan migrate:down 1` | Roll back 1 migration step |
+
+Additional artisan commands (run directly after `make build`):
 
 ```bash
-go build -o artisan artisan.go
+./artisan migrate:down [steps]      # roll back N steps
+./artisan migrate:create <name>     # create a new migration file
+./artisan migrate:force <version>   # force-set schema version (fix dirty state)
 ```
 
-| Command | Description |
-|---|---|
-| `./artisan serve` | Start the HTTP server |
-| `./artisan serve:dev` | Start with hot reload (requires `air`) |
-| `./artisan migrate:up` | Run all pending migrations |
-| `./artisan migrate:down [steps]` | Roll back N migration steps (default: 1) |
-| `./artisan migrate:create <name>` | Create a new timestamped migration file |
-| `./artisan migrate:force <version>` | Force-set schema version (fixes dirty state) |
-| `./artisan swagger:generate` | Regenerate Swagger docs from annotations |
+**Windows (without make):** run `build.bat` to build `artisan.exe`, then use `.\artisan.exe <command>`.
 
 ## Running Tests
 
@@ -52,17 +65,15 @@ go test -run TestFooBar ./tests/unit/...   # single test
 
 ## API Docs
 
-After starting the server, Swagger UI is available at:
+Two options for exploring the API:
 
-```
-http://localhost:5050/swagger/index.html
-```
-
-To regenerate docs after changing handler annotations:
+**Swagger UI** — available at `http://localhost:5050/swagger/index.html` after starting the server. Regenerate after changing handler annotations:
 
 ```bash
-./artisan swagger:generate
+make swagger
 ```
+
+**Bruno collection** — open `docs/apiDocs/` in Bruno and select the `Local` environment (`http://localhost:5050/api/v1`). Folders: `Health`, `OTP`, `Users`.
 
 ## Auth Flow
 
