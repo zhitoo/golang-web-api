@@ -15,8 +15,8 @@ func Authentication(cfg *config.Config) gin.HandlerFunc {
 	svc := authSvc.NewAuthService(cfg)
 	return func(c *gin.Context) {
 		header := c.GetHeader("Authorization")
-		if !strings.HasPrefix(header, "Bearer ") {
-			response.NewResponse().SetError(fmt.Errorf("missing or invalid authorization header")).SetHttpStatusCode(http.StatusUnauthorized).Json(c)
+		if header == "" {
+			response.NewResponse().SetError(fmt.Errorf("missing authorization header")).SetHttpStatusCode(http.StatusUnauthorized).Json(c)
 			c.Abort()
 			return
 		}
